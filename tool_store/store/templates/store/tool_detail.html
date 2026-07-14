@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ tool.name }} - 工具应用商店</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #333; }
+        .back-link { margin-bottom: 20px; }
+        .back-link a { color: #007bff; text-decoration: none; }
+        .back-link a:hover { text-decoration: underline; }
+        .detail { margin-top: 20px; }
+        .detail p { line-height: 1.6; }
+        .download-btn { display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; }
+        .download-btn:hover { background-color: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="back-link">
+        <a href="{% url 'tool_list' %}">← 返回工具列表</a>
+    </div>
+    <h1>{{ tool.name }}</h1>
+    <div class="detail">
+        <p><strong>版本:</strong> {{ tool.version }}</p>
+        <p><strong>描述:</strong><br>{{ tool.description }}</p>
+        <p><strong>上传时间:</strong> {{ tool.upload_date|date:'Y-m-d H:i' }}</p>
+        <p><strong>下载次数:</strong> {{ tool.downloads }}</p>
+        <p><a href="{% url 'tool_download' tool.pk %}" class="download-btn">下载工具</a></p>
+    </div>
+</body>
+</html>

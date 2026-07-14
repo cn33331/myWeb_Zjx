@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>工具应用商店</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        h1 { color: #333; }
+        .tool-card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        .tool-card h2 { margin-top: 0; }
+        .tool-card a { text-decoration: none; color: #007bff; }
+        .tool-card a:hover { text-decoration: underline; }
+        .meta { color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <h1>工具应用商店</h1>
+    <p><a href="{% url 'tool_upload' %}">上传新工具</a></p>
+    {% if tools %}
+        {% for tool in tools %}
+            <div class="tool-card">
+                <h2><a href="{% url 'tool_detail' tool.pk %}">{{ tool.name }}</a></h2>
+                <p>{{ tool.description }}</p>
+                <div class="meta">
+                    <span>版本: {{ tool.version }}</span> |
+                    <span>上传时间: {{ tool.upload_date|date:'Y-m-d' }}</span> |
+                    <span>下载次数: {{ tool.downloads }}</span>
+                </div>
+                <p><a href="{% url 'tool_download' tool.pk %}">下载工具</a></p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>暂无工具，请通过<a href="{% url 'tool_upload' %}">上传工具</a>页面上传。</p>
+    {% endif %}
+</body>
+</html>
