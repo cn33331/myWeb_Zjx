@@ -140,11 +140,8 @@ PIP_INDEX_URL=https://pypi.org/simple ./start.sh
 
 ```bash
 # 1. 安装系统依赖
-# CentOS / RHEL / OpenCloudOS
-yum install -y git python3 python3-venv
-
 # Ubuntu / Debian
-# apt update && apt install -y git python3 python3-venv
+apt update && apt install -y git python3 python3-venv
 
 # 2. 克隆项目（两种方式任选其一）
 # 方式A：使用 SSH（推荐，需要配置 SSH 密钥）
@@ -175,41 +172,110 @@ cat ~/.ssh/id_ed25519.pub
 2. 点击 New SSH key
 3. 粘贴公钥内容，添加即可
 
-**服务器部署注意事项：**
+### 方式四：云服务器 80 端口部署（Nginx 反向代理）
 
-| 事项 | 说明 |
-|------|------|
-| 防火墙 | 需要开放 8000 端口：`firewall-cmd --permanent --add-port=8000/tcp && firewall-cmd --reload` |
-| 安全组 | 云服务器安全组需要放行 8000 端口 |
-| 后台运行 | 使用 `nohup ./start.sh &` 或 `screen` 后台运行 |
-| 域名绑定 | 使用 Nginx 反向代理，配置域名和 HTTPS |
+> 适用于云服务器仅开放 80 端口的场景。通过 Nginx 将 80 端口请求转发到 Django 的 8000 端口。
 
-**后台运行方式：**
+**第一步：安装 Nginx**
 
 ```bash
-# 方式一：使用 nohup
-nohup ./start.sh > server.log 2>&1 &
+# CentOS / RHEL / OpenCloudOS
+yum install -y nginx
+systemctl start nginx
+systemctl enable nginx
 
-# 方式二：使用 screen（推荐，可随时恢复终端）
-screen -S toolstore
-./start.sh
-# 按 Ctrl+A+D 退出screen，按 screen -r toolstore 恢复
+# Ubuntu / Debian
+# apt update && apt install -y nginx
 ```
 
-**Nginx 反向代理配置示例（可选）：**
+**第二步：配置 Nginx 反向代理**
 
-```nginx
+```bash
+# 写入 Nginx 配置
+cat > /etc/nginx/conf.d/toolstore.conf << 'EOF'
 server {
     listen 80;
-    server_name your-domain.com;
+    server_name _;
+
+    client_max_body_size 100M;
 
     location / {
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /media/ {
+        alias /root/zjx/web/tool_store/media/;
+    }
+
+    location /static/ {
+        alias /root/zjx/web/tool_store/static/;
     }
 }
+EOF
+
+# 测试配置语法
+nginx -t
+
+# 重新加载 Nginx
+nginx -s reload
+```
+
+**第三步：后台启动 Django**
+
+```bash
+# 确保 Django 运行在 8000 端口（Nginx 会转发 80 到 8000）
+cd /root/zjx/web
+nohup ./start.sh > server.log 2>&1 &
+
+# 或者使用 screen
+screen -S toolstore
+./start.sh
+# 按 Ctrl+A+D 退出，按 screen -r toolstore 恢复
+```
+
+**第四步：验证访问**
+
+```bash
+# 检查 Nginx 状态
+systemctl status nginx
+
+# 检查 80 端口
+ss -tlnp | grep :80
+
+# 检查 Django 状态
+ss -tlnp | grep :8000
+
+# 本地测试
+curl http://127.0.0.1:80/
+```
+
+浏览器访问：`http://服务器公网IP/`
+
+**常用运维命令：**
+
+```bash
+# 重启 Nginx
+systemctl restart nginx
+
+# 查看 Nginx 日志
+tail -f /var/log/nginx/access.log
+tail -f /var/log/nginx/error.log
+
+# 查看 Django 日志
+tail -f /root/zjx/web/server.log
+
+# 停止 Django（找到进程并结束）
+ps aux | grep runserver
+kill <PID>
+
+# 更新代码后重启
+cd /root/zjx/web
+git pull origin main
+# 重启 Django 服务
 ```
 
 ## 手动启动
