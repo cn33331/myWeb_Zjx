@@ -146,14 +146,34 @@ yum install -y git python3 python3-venv
 # Ubuntu / Debian
 # apt update && apt install -y git python3 python3-venv
 
-# 2. 克隆项目
+# 2. 克隆项目（两种方式任选其一）
+# 方式A：使用 SSH（推荐，需要配置 SSH 密钥）
 git clone git@github.com:cn33331/myWeb_Zjx.git web
+
+# 方式B：使用 HTTPS（无需配置 SSH 密钥）
+# git clone https://github.com/cn33331/myWeb_Zjx.git web
+
 cd web
 
 # 3. 启动服务（自动完成虚拟环境、依赖安装、数据库迁移）
 chmod +x start.sh
 ./start.sh
 ```
+
+**SSH 密钥配置（使用方式A时需要）：**
+
+```bash
+# 在服务器上生成 SSH 密钥（一路回车即可）
+ssh-keygen -t ed25519 -C "your_email@example.com"
+
+# 查看公钥内容
+cat ~/.ssh/id_ed25519.pub
+```
+
+将输出的公钥内容复制到 GitHub：
+1. 登录 GitHub → 点击头像 → Settings → SSH and GPG keys
+2. 点击 New SSH key
+3. 粘贴公钥内容，添加即可
 
 **服务器部署注意事项：**
 
