@@ -136,6 +136,62 @@ PORT=8080 ./start.sh
 PIP_INDEX_URL=https://pypi.org/simple ./start.sh
 ```
 
+### 方式三：Linux 云服务器部署
+
+```bash
+# 1. 安装系统依赖
+# CentOS / RHEL / OpenCloudOS
+yum install -y git python3 python3-venv
+
+# Ubuntu / Debian
+# apt update && apt install -y git python3 python3-venv
+
+# 2. 克隆项目
+git clone git@github.com:cn33331/myWeb_Zjx.git web
+cd web
+
+# 3. 启动服务（自动完成虚拟环境、依赖安装、数据库迁移）
+chmod +x start.sh
+./start.sh
+```
+
+**服务器部署注意事项：**
+
+| 事项 | 说明 |
+|------|------|
+| 防火墙 | 需要开放 8000 端口：`firewall-cmd --permanent --add-port=8000/tcp && firewall-cmd --reload` |
+| 安全组 | 云服务器安全组需要放行 8000 端口 |
+| 后台运行 | 使用 `nohup ./start.sh &` 或 `screen` 后台运行 |
+| 域名绑定 | 使用 Nginx 反向代理，配置域名和 HTTPS |
+
+**后台运行方式：**
+
+```bash
+# 方式一：使用 nohup
+nohup ./start.sh > server.log 2>&1 &
+
+# 方式二：使用 screen（推荐，可随时恢复终端）
+screen -S toolstore
+./start.sh
+# 按 Ctrl+A+D 退出screen，按 screen -r toolstore 恢复
+```
+
+**Nginx 反向代理配置示例（可选）：**
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
 ## 手动启动
 
 ```bash
