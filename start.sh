@@ -107,6 +107,52 @@ print('管理员账号创建成功:', user.username)
     fi
 }
 
+check_port() {
+    log_info "检查端口 $PORT 是否被占用..."
+
+    local PIDS=""
+    if command -v lsof &> /dev/null; then
+        PIDS=$(lsof -ti tcp:$PORT 2>/dev/null || true)
+    elif command -v ss &> /dev/null; then
+        PIDS=$(ss -tlnp "sport = :$PORT" 2>/dev/null | grep -oP 'pid=\K[0-9]+' || true)
+    elif command -v netstat &> /dev/null; then
+        PIDS=$(netstat -tlnp 2>/dev/null | grep ":$PORT " | awk '{print $7}' | cut -d'/' -f1 || true)
+    fi
+
+    if [ -z "$PIDS" ]; then
+        log_info "端口 $PORT 空闲"
+        return 0
+    fi
+
+    log_warn "端口 $PORT 已被以下进程占用:"
+    for pid in $PIDS; do
+        if [ -n "$pid" ]; then
+            local cmd=""
+            if command -v ps &> /dev/null; then
+                cmd=$(ps -p $pid -o comm= 2>/dev/null || echo "unknown")
+            fi
+            log_warn "  PID: $pid  命令: $cmd"
+        fi
+    done
+
+    echo
+    read -p "是否结束这些进程并释放端口？(y/n): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        log_info "正在结束占用端口 $PORT 的进程..."
+        for pid in $PIDS; do
+            if [ -n "$pid" ]; then
+                kill -9 $pid 2>/dev/null || true
+            fi
+        done
+        sleep 1
+        log_info "端口 $PORT 已释放"
+    else
+        log_error "用户取消，启动终止"
+        exit 1
+    fi
+}
+
 start_server() {
     log_info "启动 Django 开发服务器..."
     log_info "监听地址: http://$HOST:$PORT"
@@ -128,6 +174,7 @@ main() {
     install_dependencies
     run_migrations
     check_admin_user
+    check_port
     start_server
 }
 

@@ -1,83 +1,279 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 <head>
-    <title>上传新工具 - 工具应用商店</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPLOAD — TOOL STORE</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
-        h1 { color: #333; }
-        .back-link { margin-bottom: 20px; }
-        .back-link a { color: #007bff; text-decoration: none; }
-        .back-link a:hover { text-decoration: underline; }
-        form { margin-top: 20px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 4px; }
-        .form-group textarea { height: 100px; }
-        .btn { padding: 10px 20px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .btn:hover { background-color: #0056b3; }
-        .error { color: #dc3545; margin-bottom: 15px; padding: 10px; background-color: #f8d7da; border-radius: 4px; }
-        .auth-section { margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #ddd; }
+        :root {
+            --black: #000000;
+            --white: #FFFFFF;
+            --gray-bg: #F5F5F5;
+            --gray-text: #999999;
+            --gray-border: #E5E5E5;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background: var(--white);
+            color: var(--black);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 80px 40px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding-bottom: 40px;
+            border-bottom: 2px solid var(--black);
+            margin-bottom: 60px;
+        }
+
+        .logo {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        .logo span {
+            color: var(--gray-text);
+            font-weight: 400;
+        }
+
+        .back-link {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--black);
+            text-decoration: none;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--black);
+            padding-bottom: 2px;
+            transition: opacity 0.2s;
+        }
+
+        .back-link:hover { opacity: 0.5; }
+
+        /* Page title */
+        .page-title {
+            font-size: 42px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--gray-text);
+            margin-bottom: 60px;
+        }
+
+        /* Error message */
+        .error-msg {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--black);
+            background: var(--gray-bg);
+            border-left: 3px solid var(--black);
+            padding: 12px 16px;
+            margin-bottom: 40px;
+        }
+
+        /* Form sections */
+        .form-section {
+            margin-bottom: 48px;
+        }
+
+        .section-label {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--gray-text);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 24px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--gray-border);
+        }
+
+        .section-label .num {
+            color: var(--black);
+            margin-right: 8px;
+        }
+
+        /* Form fields */
+        .field {
+            margin-bottom: 24px;
+        }
+
+        .field label {
+            display: block;
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 12px;
+            color: var(--gray-text);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .field input[type="text"],
+        .field input[type="password"],
+        .field input[type="email"],
+        .field textarea {
+            width: 100%;
+            font-family: -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+            font-size: 15px;
+            color: var(--black);
+            background: var(--white);
+            border: none;
+            border-bottom: 1px solid var(--gray-border);
+            padding: 8px 0;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .field input:focus,
+        .field textarea:focus {
+            border-bottom-color: var(--black);
+        }
+
+        .field textarea {
+            resize: vertical;
+            min-height: 80px;
+            line-height: 1.6;
+        }
+
+        .field input[type="file"] {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            padding: 8px 0;
+        }
+
+        .field-error {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 12px;
+            color: var(--black);
+            margin-top: 6px;
+            opacity: 0.7;
+        }
+
+        /* Submit */
+        .submit-section {
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 2px solid var(--black);
+        }
+
+        .submit-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--white);
+            background: var(--black);
+            border: none;
+            padding: 16px 40px;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .submit-btn:hover { opacity: 0.8; }
+
+        @media (max-width: 640px) {
+            .container { padding: 40px 20px; }
+            .page-title { font-size: 32px; }
+        }
     </style>
 </head>
 <body>
-    <div class="back-link">
-        <a href="{% url 'tool_list' %}">← 返回工具列表</a>
+    <div class="container">
+        <div class="header">
+            <div class="logo">TOOL<span>STORE</span></div>
+            <a href="{% url 'tool_list' %}" class="back-link">← BACK</a>
+        </div>
+
+        <h1 class="page-title">上传工具</h1>
+        <p class="page-subtitle">// upload a new tool to the store</p>
+
+        {% if error_message %}
+            <div class="error-msg">{{ error_message }}</div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-section">
+                <div class="section-label"><span class="num">01</span> AUTH</div>
+                <div class="field">
+                    <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                    {{ form.username }}
+                    {% if form.username.errors %}
+                        <div class="field-error">{{ form.username.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
+                    {{ form.password }}
+                    {% if form.password.errors %}
+                        <div class="field-error">{{ form.password.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="section-label"><span class="num">02</span> TOOL INFO</div>
+                <div class="field">
+                    <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <div class="field-error">{{ form.name.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ form.version.id_for_label }}">{{ form.version.label }}</label>
+                    {{ form.version }}
+                    {% if form.version.errors %}
+                        <div class="field-error">{{ form.version.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <div class="field-error">{{ form.description.errors }}</div>
+                    {% endif %}
+                </div>
+                <div class="field">
+                    <label for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>
+                    {{ form.file }}
+                    {% if form.file.errors %}
+                        <div class="field-error">{{ form.file.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="submit-section">
+                <button type="submit" class="submit-btn">
+                    <span>UPLOAD</span>
+                    <span>→</span>
+                </button>
+            </div>
+        </form>
     </div>
-    <h1>上传新工具</h1>
-    {% if error_message %}
-        <div class="error">{{ error_message }}</div>
-    {% endif %}
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="auth-section">
-            <h3>身份验证</h3>
-            <div class="form-group">
-                <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
-                {{ form.username }}
-                {% if form.username.errors %}
-                    <div class="error">{{ form.username.errors }}</div>
-                {% endif %}
-            </div>
-            <div class="form-group">
-                <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>
-                {{ form.password }}
-                {% if form.password.errors %}
-                    <div class="error">{{ form.password.errors }}</div>
-                {% endif %}
-            </div>
-        </div>
-        <div>
-            <h3>工具信息</h3>
-            <div class="form-group">
-                <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
-                {{ form.name }}
-                {% if form.name.errors %}
-                    <div class="error">{{ form.name.errors }}</div>
-                {% endif %}
-            </div>
-            <div class="form-group">
-                <label for="{{ form.version.id_for_label }}">{{ form.version.label }}</label>
-                {{ form.version }}
-                {% if form.version.errors %}
-                    <div class="error">{{ form.version.errors }}</div>
-                {% endif %}
-            </div>
-            <div class="form-group">
-                <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
-                {{ form.description }}
-                {% if form.description.errors %}
-                    <div class="error">{{ form.description.errors }}</div>
-                {% endif %}
-            </div>
-            <div class="form-group">
-                <label for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>
-                {{ form.file }}
-                {% if form.file.errors %}
-                    <div class="error">{{ form.file.errors }}</div>
-                {% endif %}
-            </div>
-        </div>
-        <p><button type="submit" class="btn">上传工具</button></p>
-    </form>
 </body>
 </html>

@@ -1,30 +1,202 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 <head>
-    <title>{{ tool.name }} - 工具应用商店</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ tool.name }} — TOOL STORE</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-        h1 { color: #333; }
-        .back-link { margin-bottom: 20px; }
-        .back-link a { color: #007bff; text-decoration: none; }
-        .back-link a:hover { text-decoration: underline; }
-        .detail { margin-top: 20px; }
-        .detail p { line-height: 1.6; }
-        .download-btn { display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; }
-        .download-btn:hover { background-color: #0056b3; }
+        :root {
+            --black: #000000;
+            --white: #FFFFFF;
+            --gray-bg: #F5F5F5;
+            --gray-text: #999999;
+            --gray-border: #E5E5E5;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background: var(--white);
+            color: var(--black);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 80px 40px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding-bottom: 40px;
+            border-bottom: 2px solid var(--black);
+            margin-bottom: 60px;
+        }
+
+        .logo {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        .logo span {
+            color: var(--gray-text);
+            font-weight: 400;
+        }
+
+        .back-link {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--black);
+            text-decoration: none;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--black);
+            padding-bottom: 2px;
+            transition: opacity 0.2s;
+        }
+
+        .back-link:hover { opacity: 0.5; }
+
+        /* Tool info */
+        .tool-name {
+            font-size: 42px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 8px;
+        }
+
+        .tool-tag {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--gray-text);
+            margin-bottom: 48px;
+        }
+
+        .tool-tag .version {
+            color: var(--black);
+            border: 1px solid var(--gray-border);
+            padding: 2px 8px;
+        }
+
+        /* Info table */
+        .info-table {
+            margin-bottom: 48px;
+        }
+
+        .info-row {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--gray-border);
+            align-items: start;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 12px;
+            color: var(--gray-text);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding-top: 2px;
+        }
+
+        .info-value {
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .info-value.mono {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 14px;
+        }
+
+        /* Download */
+        .download-section {
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 2px solid var(--black);
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--white);
+            background: var(--black);
+            text-decoration: none;
+            padding: 16px 40px;
+            letter-spacing: 0.05em;
+            transition: opacity 0.2s;
+        }
+
+        .download-btn:hover { opacity: 0.8; }
+
+        .download-arrow {
+            font-size: 16px;
+        }
+
+        @media (max-width: 640px) {
+            .container { padding: 40px 20px; }
+            .tool-name { font-size: 32px; }
+            .info-row {
+                grid-template-columns: 1fr;
+                gap: 4px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="back-link">
-        <a href="{% url 'tool_list' %}">← 返回工具列表</a>
-    </div>
-    <h1>{{ tool.name }}</h1>
-    <div class="detail">
-        <p><strong>版本:</strong> {{ tool.version }}</p>
-        <p><strong>描述:</strong><br>{{ tool.description }}</p>
-        <p><strong>上传时间:</strong> {{ tool.upload_date|date:'Y-m-d H:i' }}</p>
-        <p><strong>下载次数:</strong> {{ tool.downloads }}</p>
-        <p><a href="{% url 'tool_download' tool.pk %}" class="download-btn">下载工具</a></p>
+    <div class="container">
+        <div class="header">
+            <div class="logo">TOOL<span>STORE</span></div>
+            <a href="{% url 'tool_list' %}" class="back-link">← BACK</a>
+        </div>
+
+        <h1 class="tool-name">{{ tool.name }}</h1>
+        <div class="tool-tag">
+            <span class="version">v{{ tool.version }}</span>
+        </div>
+
+        <div class="info-table">
+            <div class="info-row">
+                <div class="info-label">Description</div>
+                <div class="info-value">{{ tool.description }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Uploaded</div>
+                <div class="info-value mono">{{ tool.upload_date|date:'Y-m-d H:i' }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Downloads</div>
+                <div class="info-value mono">{{ tool.downloads }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">File</div>
+                <div class="info-value mono">{{ tool.file.name }}</div>
+            </div>
+        </div>
+
+        <div class="download-section">
+            <a href="{% url 'tool_download' tool.pk %}" class="download-btn">
+                <span>DOWNLOAD</span>
+                <span class="download-arrow">↓</span>
+            </a>
+        </div>
     </div>
 </body>
 </html>
