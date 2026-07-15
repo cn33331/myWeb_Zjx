@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOOL STORE</title>
+    <style>
+        :root {
+            --black: #000000;
+            --white: #FFFFFF;
+            --gray-bg: #F5F5F5;
+            --gray-text: #999999;
+            --gray-border: #E5E5E5;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background: var(--white);
+            color: var(--black);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 80px 40px;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding-bottom: 40px;
+            border-bottom: 2px solid var(--black);
+            margin-bottom: 60px;
+        }
+
+        .logo {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--black);
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: var(--gray-text);
+            font-weight: 400;
+        }
+
+        .upload-link {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--black);
+            text-decoration: none;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--black);
+            padding-bottom: 2px;
+            transition: opacity 0.2s;
+        }
+
+        .upload-link:hover { opacity: 0.5; }
+
+        /* Page title */
+        .page-title {
+            font-size: 48px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
+        }
+
+        .page-subtitle {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--gray-text);
+            margin-bottom: 60px;
+        }
+
+        /* Tool list */
+        .tool-list {
+            list-style: none;
+        }
+
+        .tool-item {
+            padding: 32px 0;
+            border-bottom: 1px solid var(--gray-border);
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 40px;
+            align-items: start;
+        }
+
+        .tool-item:last-child {
+            border-bottom: none;
+        }
+
+        .tool-main {
+            min-width: 0;
+        }
+
+        .tool-name {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            margin-bottom: 8px;
+        }
+
+        .tool-name a {
+            color: var(--black);
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .tool-name a:hover { opacity: 0.5; }
+
+        .tool-desc {
+            font-size: 14px;
+            color: var(--gray-text);
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+
+        .tool-meta {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 12px;
+            color: var(--gray-text);
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tool-meta span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tool-meta .label {
+            color: var(--black);
+            opacity: 0.4;
+        }
+
+        .tool-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+
+        .download-link {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--black);
+            text-decoration: none;
+            padding: 8px 20px;
+            border: 1px solid var(--black);
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .download-link:hover {
+            background: var(--black);
+            color: var(--white);
+        }
+
+        /* Empty state */
+        .empty {
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .empty p {
+            font-size: 15px;
+            color: var(--gray-text);
+            margin-bottom: 16px;
+        }
+
+        .empty a {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--black);
+            text-decoration: none;
+            border-bottom: 1px solid var(--black);
+            padding-bottom: 2px;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            padding-top: 24px;
+            border-top: 1px solid var(--gray-border);
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 11px;
+            color: var(--gray-text);
+            letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 640px) {
+            .container { padding: 40px 20px; }
+            .page-title { font-size: 32px; }
+            .tool-item {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .tool-actions {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="{% url 'home' %}" class="logo">TOOL<span>STORE</span></a>
+            <a href="{% url 'tool_upload' %}" class="upload-link">+ UPLOAD</a>
+        </div>
+
+        <h1 class="page-title">工具</h1>
+        <p class="page-subtitle">// browse and download tools</p>
+
+        {% if tools %}
+            <ul class="tool-list">
+                {% for tool in tools %}
+                    <li class="tool-item">
+                        <div class="tool-main">
+                            <h2 class="tool-name"><a href="{% url 'tool_detail' tool.pk %}">{{ tool.name }}</a></h2>
+                            <p class="tool-desc">{{ tool.description }}</p>
+                            <div class="tool-meta">
+                                <span><span class="label">ver</span> {{ tool.version }}</span>
+                                <span><span class="label">date</span> {{ tool.upload_date|date:'Y-m-d' }}</span>
+                                <span><span class="label">downloads</span> {{ tool.downloads }}</span>
+                            </div>
+                        </div>
+                        <div class="tool-actions">
+                            <a href="{% url 'tool_download' tool.pk %}" class="download-link">DOWNLOAD</a>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="empty">
+                <p>暂无工具</p>
+                <a href="{% url 'tool_upload' %}">上传第一个工具 →</a>
+            </div>
+        {% endif %}
+
+        <div class="footer">
+            TOOL STORE / Django {{ django_version|default:"" }}
+        </div>
+    </div>
+</body>
+</html>

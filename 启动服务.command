@@ -6,13 +6,13 @@ cd "$SCRIPT_DIR"
 clear
 
 echo "=========================================="
-echo "  Tool Store - 工具应用商店启动脚本"
+echo "  Hub - 多功能 Web 平台启动脚本"
 echo "=========================================="
 echo
 
 PYTHON_BIN=""
 VENV_DIR="$SCRIPT_DIR/venv"
-PROJECT_DIR="$SCRIPT_DIR/tool_store"
+PROJECT_DIR="$SCRIPT_DIR/hub"
 PIP_INDEX_URL="${PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}"
 HOST="${HOST:-0.0.0.0}"
 PORT="${PORT:-80}"

@@ -3,9 +3,9 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$SCRIPT_DIR/tool_store"
+PROJECT_DIR="$SCRIPT_DIR/hub"
 VENV_DIR="$SCRIPT_DIR/venv"
-DJANGO_SETTINGS_MODULE="tool_store.settings"
+DJANGO_SETTINGS_MODULE="hub.settings"
 
 PYTHON_BIN=""
 PIP_INDEX_URL="${PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}"
@@ -165,7 +165,7 @@ start_server() {
 
 main() {
     echo "=========================================="
-    echo "  Tool Store - 工具应用商店启动脚本"
+    echo "  Hub - 多功能 Web 平台启动脚本"
     echo "=========================================="
     echo
 

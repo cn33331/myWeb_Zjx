@@ -1,5 +1,5 @@
 """
-URL configuration for tool_store project.
+URL configuration for hub project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/4.2/topics/http/urls/
@@ -21,7 +21,9 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('store.urls')),
+    path('', include('home.urls')),
+    path('store/', include('store.urls')),
+    path('forum/', include('forum.urls')),
 ]
 
 if settings.DEBUG:

@@ -1,6 +1,15 @@
-# Tool Store - 工具应用商店
+# Hub - 多功能 Web 平台
 
-基于 Django 的工具应用商店平台，用于上传和下载开发的工具。
+基于 Django 的多功能 Web 平台，采用模块化架构，按功能拆分为多个独立应用。目前已包含「应用商店」与「论坛」两个模块，后续可继续扩展新模块。
+
+## 平台模块
+
+| 模块 | 路径前缀 | 应用 | 说明 |
+| --- | --- | --- | --- |
+| 首页入口 | `/` | `home` | 展示各功能模块入口 |
+| 应用商店 | `/store/` | `store` | 工具的上传、下载与详情查看 |
+| 论坛 | `/forum/` | `forum` | 注册、登录、发帖与回复讨论 |
+| 管理后台 | `/admin/` | Django Admin | 站点管理 |
 
 ## 项目环境搭建步骤
 
@@ -46,10 +55,10 @@ pip install django
 
 ```bash
 # 创建项目
-django-admin startproject tool_store
+django-admin startproject hub
 
 # 进入项目目录
-cd tool_store
+cd hub
 
 # 创建应用
 python manage.py startapp store
@@ -72,29 +81,48 @@ web/
 ├── venv/              # 虚拟环境
 ├── .gitignore        # Git 忽略规则
 ├── README.md         # 项目说明
-└── tool_store/       # Django 项目根目录
+├── start.sh          # Linux 启动脚本
+├── 启动服务.command    # macOS 双击启动
+└── hub/              # Django 项目根目录
     ├── manage.py     # 管理脚本
-    ├── tool_store/   # 项目配置
+    ├── hub/          # 项目配置
     │   ├── __init__.py
     │   ├── settings.py
     │   ├── urls.py
     │   └── wsgi.py
-    └── store/        # 应用商店应用
-        ├── __init__.py
-        ├── admin.py
-        ├── apps.py
+    ├── home/         # 首页入口应用（根路径 / 展示模块入口）
+    │   ├── views.py
+    │   ├── urls.py
+    │   └── templates/home/index.html
+    ├── store/        # 应用商店模块
+    │   ├── models.py
+    │   ├── views.py
+    │   ├── urls.py
+    │   └── templates/store/
+    └── forum/        # 论坛模块
         ├── models.py
         ├── views.py
         ├── urls.py
-        └── templates/
+        └── templates/forum/
 ```
 
-## 应用商店功能
+## 功能说明
 
+### 首页（home）
+- 根路径 `/` 展示平台各功能模块入口卡片
+- 作为应用商店与论坛的统一展示入口
+
+### 应用商店（store）
 - 工具列表展示
 - 工具上传管理（管理员）
 - 工具下载（带下载次数统计）
 - 工具详情查看
+
+### 论坛（forum）
+- 用户注册与管理员审核
+- 登录 / 登出
+- 发布话题与回复讨论
+- 管理员审核面板
 
 ## 快速启动
 
@@ -209,7 +237,7 @@ git pull origin main
 
 ```bash
 # 进入项目目录
-cd tool_store
+cd hub
 source ../venv/bin/activate
 
 # 创建管理员账号（首次运行）
@@ -221,11 +249,13 @@ python manage.py runserver
 
 ## 访问地址
 
-- 首页：http://localhost:8000/
+- 平台首页：http://localhost:8000/
+- 应用商店：http://localhost:8000/store/
+- 论坛：http://localhost:8000/forum/
 - 管理后台：http://localhost:8000/admin/
 
 ## 使用说明
 
-1. 通过管理后台上传工具文件
-2. 在首页浏览和搜索工具
-3. 点击下载链接获取工具文件
+1. 访问首页 `/` 选择要进入的功能模块
+2. 应用商店：通过管理后台上传工具文件，在 `/store/` 浏览和下载
+3. 论坛：在 `/forum/` 注册账号（需管理员审核）后发帖与回复

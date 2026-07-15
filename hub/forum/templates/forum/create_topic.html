@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEW TOPIC</title>
+    <style>
+        :root {
+            --black: #000000;
+            --white: #FFFFFF;
+            --gray-bg: #F5F5F5;
+            --gray-text: #999999;
+            --gray-border: #E5E5E5;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background: var(--white);
+            color: var(--black);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 80px 40px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding-bottom: 40px;
+            border-bottom: 2px solid var(--black);
+            margin-bottom: 60px;
+        }
+
+        .logo {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        .logo span {
+            color: var(--gray-text);
+            font-weight: 400;
+        }
+
+        .nav {
+            display: flex;
+            gap: 32px;
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+        }
+
+        .nav a {
+            color: var(--black);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            padding-bottom: 2px;
+            transition: border-color 0.2s;
+        }
+
+        .nav a:hover {
+            border-bottom-color: var(--black);
+        }
+
+        .back-link {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--gray-text);
+            text-decoration: none;
+            margin-bottom: 24px;
+            display: inline-block;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--black);
+        }
+
+        .page-title {
+            font-size: 40px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
+        }
+
+        .page-subtitle {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--gray-text);
+            margin-bottom: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 32px;
+        }
+
+        .form-group label {
+            display: block;
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 12px;
+            color: var(--gray-text);
+            margin-bottom: 8px;
+            letter-spacing: 0.05em;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 16px 0;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-bottom: 2px solid var(--black);
+            background: transparent;
+            color: var(--black);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            border-bottom-color: var(--gray-text);
+        }
+
+        .form-group input::placeholder {
+            color: var(--gray-text);
+            opacity: 0.6;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            padding: 24px;
+            font-size: 16px;
+            border: 1px solid var(--gray-border);
+            background: var(--white);
+            color: var(--black);
+            outline: none;
+            resize: vertical;
+            font-family: inherit;
+            line-height: 1.7;
+            transition: border-color 0.2s;
+        }
+
+        .form-group textarea:focus {
+            border-color: var(--black);
+        }
+
+        .form-group textarea::placeholder {
+            color: var(--gray-text);
+            opacity: 0.6;
+        }
+
+        .btn {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--white);
+            background: var(--black);
+            border: none;
+            padding: 16px 32px;
+            cursor: pointer;
+            letter-spacing: 0.05em;
+            transition: opacity 0.2s;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        .footer {
+            margin-top: 80px;
+            padding-top: 24px;
+            border-top: 1px solid var(--gray-border);
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 11px;
+            color: var(--gray-text);
+            letter-spacing: 0.05em;
+        }
+
+        .user-info {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--black);
+        }
+
+        .user-info span {
+            color: var(--gray-text);
+            margin-right: 8px;
+        }
+
+        @media (max-width: 640px) {
+            .container { padding: 40px 20px; }
+            .page-title { font-size: 28px; }
+            .header { flex-direction: column; gap: 16px; }
+            .nav { gap: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">FORUM<span></span></div>
+            <div class="nav">
+                {% if user %}
+                    <span class="user-info"><span>{{ user.username }}</span><a href="{% url 'forum_logout' %}">LOGOUT</a></span>
+                {% else %}
+                    <a href="{% url 'forum_login' %}">LOGIN</a>
+                    <a href="{% url 'forum_register' %}">REGISTER</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <a href="{% url 'forum_home' %}" class="back-link">← 返回论坛首页</a>
+
+        <h1 class="page-title">新帖子</h1>
+        <p class="page-subtitle">// create a new discussion</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>TITLE</label>
+                {{ form.title }}
+            </div>
+            <div class="form-group">
+                <label>CONTENT</label>
+                {{ form.content }}
+            </div>
+            <button type="submit" class="btn">POST</button>
+        </form>
+
+        <div class="footer">
+            FORUM / Django
+        </div>
+    </div>
+</body>
+</html>

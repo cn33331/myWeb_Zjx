@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADMIN REVIEW</title>
+    <style>
+        :root {
+            --black: #000000;
+            --white: #FFFFFF;
+            --gray-bg: #F5F5F5;
+            --gray-text: #999999;
+            --gray-border: #E5E5E5;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background: var(--white);
+            color: var(--black);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 80px 40px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding-bottom: 40px;
+            border-bottom: 2px solid var(--black);
+            margin-bottom: 60px;
+        }
+
+        .logo {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        .logo span {
+            color: var(--gray-text);
+            font-weight: 400;
+        }
+
+        .nav {
+            display: flex;
+            gap: 32px;
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+        }
+
+        .nav a {
+            color: var(--black);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            padding-bottom: 2px;
+            transition: border-color 0.2s;
+        }
+
+        .nav a:hover {
+            border-bottom-color: var(--black);
+        }
+
+        .back-link {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--gray-text);
+            text-decoration: none;
+            margin-bottom: 24px;
+            display: inline-block;
+            transition: color 0.2s;
+        }
+
+        .back-link:hover {
+            color: var(--black);
+        }
+
+        .page-title {
+            font-size: 40px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
+        }
+
+        .page-subtitle {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--gray-text);
+            margin-bottom: 60px;
+        }
+
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--gray-text);
+            margin-bottom: 32px;
+            letter-spacing: 0.05em;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--gray-border);
+        }
+
+        .user-list {
+            list-style: none;
+        }
+
+        .user-item {
+            padding: 24px 0;
+            border-bottom: 1px solid var(--gray-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .user-name {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--black);
+        }
+
+        .user-email {
+            font-size: 13px;
+            color: var(--gray-text);
+        }
+
+        .user-date {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 12px;
+            color: var(--gray-text);
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 12px;
+            padding: 8px 16px;
+            cursor: pointer;
+            letter-spacing: 0.05em;
+            transition: opacity 0.2s;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-approve {
+            color: var(--white);
+            background: var(--black);
+        }
+
+        .btn-approve:hover {
+            opacity: 0.8;
+        }
+
+        .btn-reject {
+            color: var(--black);
+            background: transparent;
+            border: 1px solid var(--black);
+        }
+
+        .btn-reject:hover {
+            background: var(--black);
+            color: var(--white);
+        }
+
+        .empty {
+            padding: 40px 0;
+            text-align: center;
+            color: var(--gray-text);
+            font-size: 14px;
+        }
+
+        .footer {
+            margin-top: 80px;
+            padding-top: 24px;
+            border-top: 1px solid var(--gray-border);
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 11px;
+            color: var(--gray-text);
+            letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 640px) {
+            .container { padding: 40px 20px; }
+            .page-title { font-size: 28px; }
+            .header { flex-direction: column; gap: 16px; }
+            .nav { gap: 16px; }
+            .user-item { flex-direction: column; align-items: flex-start; gap: 16px; }
+            .user-actions { width: 100%; justify-content: flex-start; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">FORUM<span></span></div>
+            <div class="nav">
+                <a href="{% url 'forum_home' %}">HOME</a>
+            </div>
+        </div>
+
+        <a href="{% url 'forum_home' %}" class="back-link">← 返回论坛首页</a>
+
+        <h1 class="page-title">管理员审核</h1>
+        <p class="page-subtitle">// review pending account applications</p>
+
+        <div class="section">
+            <div class="section-title">// pending ({{ pending_users.count }})</div>
+            {% if pending_users %}
+                <ul class="user-list">
+                    {% for user in pending_users %}
+                        <li class="user-item">
+                            <div class="user-info">
+                                <span class="user-name">{{ user.username }}</span>
+                                <span class="user-email">{{ user.email }}</span>
+                                <span class="user-date">apply: {{ user.apply_date|date:'Y-m-d H:i' }}</span>
+                            </div>
+                            <div class="user-actions">
+                                <form method="post" action="{% url 'admin_review' %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="approve">
+                                    <input type="hidden" name="user_id" value="{{ user.pk }}">
+                                    <button type="submit" class="btn btn-approve">APPROVE</button>
+                                </form>
+                                <form method="post" action="{% url 'admin_review' %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="reject">
+                                    <input type="hidden" name="user_id" value="{{ user.pk }}">
+                                    <button type="submit" class="btn btn-reject">REJECT</button>
+                                </form>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty">暂无待审核的申请</div>
+            {% endif %}
+        </div>
+
+        <div class="section">
+            <div class="section-title">// approved ({{ approved_users.count }})</div>
+            {% if approved_users %}
+                <ul class="user-list">
+                    {% for user in approved_users %}
+                        <li class="user-item">
+                            <div class="user-info">
+                                <span class="user-name">{{ user.username }}</span>
+                                <span class="user-email">{{ user.email }}</span>
+                                <span class="user-date">approved: {{ user.approved_date|date:'Y-m-d H:i' }}</span>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty">暂无已审核的用户</div>
+            {% endif %}
+        </div>
+
+        <div class="footer">
+            FORUM / Django
+        </div>
+    </div>
+</body>
+</html>

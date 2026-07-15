@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HUB</title>
+    <style>
+        :root {
+            --black: #000000;
+            --white: #FFFFFF;
+            --gray-text: #999999;
+            --gray-border: #E5E5E5;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+            background: var(--white);
+            color: var(--black);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 80px 40px;
+        }
+
+        /* Header */
+        .header {
+            padding-bottom: 40px;
+            border-bottom: 2px solid var(--black);
+            margin-bottom: 80px;
+        }
+
+        .logo {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+        }
+
+        .logo span {
+            color: var(--gray-text);
+            font-weight: 400;
+        }
+
+        /* Page title */
+        .page-title {
+            font-size: 48px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 12px;
+        }
+
+        .page-subtitle {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            color: var(--gray-text);
+            margin-bottom: 80px;
+        }
+
+        /* Module cards */
+        .module-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        .module-card {
+            border: 1px solid var(--black);
+            padding: 40px 32px;
+            transition: background 0.2s, color 0.2s;
+            text-decoration: none;
+            color: var(--black);
+            display: block;
+        }
+
+        .module-card:hover {
+            background: var(--black);
+            color: var(--white);
+        }
+
+        .module-card:hover .module-code {
+            color: var(--white);
+        }
+
+        .module-card:hover .module-desc {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .module-card:hover .module-arrow {
+            color: var(--white);
+        }
+
+        .module-code {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            color: var(--black);
+        }
+
+        .module-name {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+
+        .module-desc {
+            font-size: 14px;
+            color: var(--gray-text);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+
+        .module-arrow {
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 13px;
+            letter-spacing: 0.05em;
+            color: var(--black);
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 80px;
+            padding-top: 24px;
+            border-top: 1px solid var(--gray-border);
+            font-family: "SF Mono", "JetBrains Mono", "Menlo", monospace;
+            font-size: 11px;
+            color: var(--gray-text);
+            letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 640px) {
+            .container { padding: 40px 20px; }
+            .page-title { font-size: 32px; }
+            .module-grid { grid-template-columns: 1fr; }
+            .module-name { font-size: 22px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">HUB<span></span></div>
+        </div>
+
+        <h1 class="page-title">平台</h1>
+        <p class="page-subtitle">// multi-function web platform</p>
+
+        <div class="module-grid">
+            {% for mod in modules %}
+                <a href="{{ mod.url }}" class="module-card">
+                    <div class="module-code">{{ mod.code }}</div>
+                    <div class="module-name">{{ mod.name }}</div>
+                    <div class="module-desc">{{ mod.desc }}</div>
+                    <div class="module-arrow">ENTER →</div>
+                </a>
+            {% endfor %}
+        </div>
+
+        <div class="footer">
+            HUB / Django
+        </div>
+    </div>
+</body>
+</html>
