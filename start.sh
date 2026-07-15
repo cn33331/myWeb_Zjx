@@ -10,7 +10,7 @@ DJANGO_SETTINGS_MODULE="tool_store.settings"
 PYTHON_BIN=""
 PIP_INDEX_URL="${PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}"
 HOST="${HOST:-0.0.0.0}"
-PORT="${PORT:-8000}"
+PORT="${PORT:-80}"
 
 log_info() {
     echo -e "\033[32m[INFO]\033[0m $1"
