@@ -215,6 +215,32 @@ cp nginx_bt.conf /www/server/panel/vhost/nginx/hub.conf
 
 启动后访问：`http://服务器公网IP/`
 
+### 代码更新流程
+
+服务器上代码更新后的操作步骤：
+
+```bash
+cd /root/zjx/web/web
+
+# 1. 拉取最新代码
+git pull origin main
+
+# 2. 重新部署（更新依赖、迁移数据库、构建前端）
+./deploy_bt.sh
+
+# 3. 重启 Gunicorn 服务
+systemctl restart hub
+
+# 4. 重载 Nginx 配置（若 nginx_bt.conf 有变更）
+/www/server/nginx/sbin/nginx -t && /www/server/nginx/sbin/nginx -s reload
+```
+
+**说明：**
+- `git pull` - 拉取远程仓库最新代码
+- `./deploy_bt.sh` - 自动完成依赖安装、前端构建、数据库迁移、静态文件收集
+- `systemctl restart hub` - 重启 Gunicorn 使后端代码生效
+- Nginx 重载仅在 Nginx 配置文件变更时需要
+
 ## 安全注意事项
 
 1. 生产环境设置 `DEBUG = False`
