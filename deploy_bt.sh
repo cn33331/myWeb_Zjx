@@ -4,8 +4,6 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_NAME="hub"
-SERVER_IP=""
-SERVER_PORT="${SERVER_PORT:-80}"
 
 log_info() {
     echo -e "\033[32m[INFO]\033[0m $1"
@@ -20,127 +18,134 @@ log_error() {
 }
 
 check_env() {
-    log_info "检查本地环境..."
+    log_info "检查服务器环境..."
     
-    if ! command -v git &> /dev/null; then
-        log_error "未找到 git，请先安装 git"
+    if ! command -v python3 &> /dev/null; then
+        log_error "未找到 python3，请先安装 Python 3.x"
         exit 1
     fi
     
-    if ! command -v ssh &> /dev/null; then
-        log_error "未找到 ssh，请先安装 openssh"
+    if ! command -v npm &> /dev/null; then
+        log_error "未找到 npm，请先安装 Node.js"
         exit 1
     fi
     
-    log_info "本地环境检查通过"
+    log_info "服务器环境检查通过"
 }
 
-read_config() {
-    echo
-    read -p "请输入服务器 IP 地址: " SERVER_IP
-    if [ -z "$SERVER_IP" ]; then
-        log_error "服务器 IP 不能为空"
-        exit 1
-    fi
+setup_python() {
+    log_info "配置 Python 环境..."
     
-    read -p "请输入服务器 SSH 端口 [默认22]: " SSH_PORT
-    SSH_PORT=${SSH_PORT:-22}
-    
-    read -p "请输入服务器用户名 [默认root]: " SERVER_USER
-    SERVER_USER=${SERVER_USER:-root}
-    
-    read -p "请输入项目部署路径 [默认/www/wwwroot/hub]: " DEPLOY_PATH
-    DEPLOY_PATH=${DEPLOY_PATH:-/www/wwwroot/hub}
-    
-    read -p "请输入 Nginx 站点域名: " SITE_DOMAIN
-}
-
-upload_code() {
-    log_info "上传代码到服务器..."
-    rsync -avz --exclude='venv/' --exclude='node_modules/' --exclude='.git/' \
-          --exclude='dist/' --exclude='*.log' \
-          "$SCRIPT_DIR/" "$SERVER_USER@$SERVER_IP:$DEPLOY_PATH/"
-    log_info "代码上传完成"
-}
-
-run_remote_setup() {
-    log_info "在服务器上执行部署..."
-    
-    ssh -p "$SSH_PORT" "$SERVER_USER@$SERVER_IP" << EOF
-    set -e
-    
-    echo "=========================================="
-    echo "  Hub 平台 - 宝塔面板部署脚本"
-    echo "=========================================="
-    echo
-
-    PROJECT_DIR="$DEPLOY_PATH"
-    VENV_DIR="\$PROJECT_DIR/venv"
+    VENV_DIR="$SCRIPT_DIR/venv"
     PYTHON_BIN="/www/server/panel/pyenv/bin/python3"
 
-    if [ ! -f "\$PYTHON_BIN" ]; then
-        echo "[WARN] 宝塔 Python 环境未找到，使用系统 Python..."
+    if [ ! -f "$PYTHON_BIN" ]; then
+        log_warn "宝塔 Python 环境未找到，使用系统 Python..."
         PYTHON_BIN="python3"
     fi
 
-    echo "[INFO] 使用 Python: \$(\$PYTHON_BIN --version)"
+    log_info "使用 Python: $($PYTHON_BIN --version)"
 
-    if [ ! -d "\$VENV_DIR" ]; then
-        echo "[INFO] 创建虚拟环境..."
-        \$PYTHON_BIN -m venv "\$VENV_DIR"
-        echo "[INFO] 虚拟环境创建成功"
+    if [ ! -d "$VENV_DIR" ]; then
+        log_info "创建虚拟环境..."
+        $PYTHON_BIN -m venv "$VENV_DIR"
+        log_info "虚拟环境创建成功"
     fi
 
-    echo "[INFO] 安装 Python 依赖..."
-    \$VENV_DIR/bin/pip install -i https://pypi.tuna.tsinghua.edu.cn/simple -r "\$PROJECT_DIR/requirements.txt"
-    echo "[INFO] Python 依赖安装完成"
+    log_info "安装 Python 依赖..."
+    "$VENV_DIR/bin/pip" install -i https://pypi.tuna.tsinghua.edu.cn/simple -r "$SCRIPT_DIR/requirements.txt"
+    log_info "Python 依赖安装完成"
 
-    echo "[INFO] 安装 Node.js 依赖..."
-    cd "\$PROJECT_DIR/vue-frontend"
+    log_info "安装 Gunicorn..."
+    "$VENV_DIR/bin/pip" install -i https://pypi.tuna.tsinghua.edu.cn/simple gunicorn
+    log_info "Gunicorn 安装完成"
+}
+
+setup_frontend() {
+    log_info "配置前端环境..."
+    
+    cd "$SCRIPT_DIR/vue-frontend"
+    
+    log_info "安装 Node.js 依赖..."
     npm install --registry=https://registry.npmmirror.com
-    echo "[INFO] Node.js 依赖安装完成"
+    log_info "Node.js 依赖安装完成"
 
-    echo "[INFO] 构建前端..."
+    log_info "构建前端..."
     npm run build
-    echo "[INFO] 前端构建完成"
+    log_info "前端构建完成"
+    
+    cd "$SCRIPT_DIR"
+}
 
-    echo "[INFO] 执行数据库迁移..."
-    cd "\$PROJECT_DIR/hub"
-    \$VENV_DIR/bin/python manage.py migrate --noinput
-    echo "[INFO] 数据库迁移完成"
+setup_django() {
+    log_info "配置 Django..."
+    
+    cd "$SCRIPT_DIR/hub"
+    
+    log_info "执行数据库迁移..."
+    "$SCRIPT_DIR/venv/bin/python" manage.py migrate --noinput
+    log_info "数据库迁移完成"
 
-    echo "[INFO] 收集静态文件..."
-    \$VENV_DIR/bin/python manage.py collectstatic --noinput
-    echo "[INFO] 静态文件收集完成"
+    log_info "收集静态文件..."
+    "$SCRIPT_DIR/venv/bin/python" manage.py collectstatic --noinput
+    log_info "静态文件收集完成"
 
-    echo "[INFO] 安装 Gunicorn..."
-    \$VENV_DIR/bin/pip install -i https://pypi.tuna.tsinghua.edu.cn/simple gunicorn
-    echo "[INFO] Gunicorn 安装完成"
+    log_info "检查管理员账号..."
+    ADMIN_EXISTS=$("$SCRIPT_DIR/venv/bin/python" manage.py shell -c "
+from django.contrib.auth.models import User
+if User.objects.filter(is_superuser=True).exists():
+    print('yes')
+else:
+    print('no')
+" 2>&1)
 
-    echo "=========================================="
-    echo "  部署完成！"
-    echo "=========================================="
-EOF
+    if [[ "$ADMIN_EXISTS" == *"yes"* ]]; then
+        log_info "检测到已有管理员账号"
+    else
+        log_warn "未检测到管理员账号"
+        read -p "是否创建管理员账号？(y/n): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            log_info "创建管理员账号..."
+            read -p "请输入用户名: " ADMIN_USER
+            read -p "请输入邮箱: " ADMIN_EMAIL
+            read -s -p "请输入密码: " ADMIN_PASS
+            echo
+            "$SCRIPT_DIR/venv/bin/python" manage.py shell -c "
+from django.contrib.auth.models import User
+user = User.objects.create_superuser('$ADMIN_USER', '$ADMIN_EMAIL', '$ADMIN_PASS')
+print('管理员账号创建成功:', user.username)
+"
+            log_info "管理员账号创建完成"
+        else
+            log_warn "跳过管理员账号创建"
+        fi
+    fi
+    
+    cd "$SCRIPT_DIR"
 }
 
 generate_nginx_config() {
     log_info "生成 Nginx 配置..."
     
+    read -p "请输入服务器公网IP: " SERVER_IP
+    read -p "请输入站点域名(可选): " SITE_DOMAIN
+    
     NGINX_CONF="server {
-    listen $SERVER_PORT;
-    listen [::]:$SERVER_PORT;
-    server_name $SITE_DOMAIN $SERVER_IP localhost;
+    listen 80;
+    listen [::]:80;
+    server_name $SERVER_IP $SITE_DOMAIN localhost;
 
     charset utf-8;
     client_max_body_size 50M;
 
     location /static/ {
-        root $DEPLOY_PATH/hub;
+        root $SCRIPT_DIR/hub;
         expires 30d;
     }
 
     location /media/ {
-        root $DEPLOY_PATH/hub;
+        root $SCRIPT_DIR/hub;
     }
 
     location /api/ {
@@ -162,7 +167,7 @@ generate_nginx_config() {
     }
 
     location / {
-        root $DEPLOY_PATH/vue-frontend/dist;
+        root $SCRIPT_DIR/vue-frontend/dist;
         try_files \$uri \$uri/ /index.html;
     }
 
@@ -171,76 +176,52 @@ generate_nginx_config() {
 }"
 
     echo "$NGINX_CONF" > "$SCRIPT_DIR/nginx_bt.conf"
-    log_info "Nginx 配置已生成: nginx_bt.conf"
+    log_info "Nginx 配置已生成: $SCRIPT_DIR/nginx_bt.conf"
 }
 
-generate_service_config() {
-    log_info "生成 Gunicorn 服务配置..."
-    
-    SERVICE_CONF="[program:$PROJECT_NAME]
-command=$DEPLOY_PATH/venv/bin/gunicorn hub.wsgi:application --bind 127.0.0.1:8000 --workers 4
-directory=$DEPLOY_PATH/hub
-autostart=true
-autorestart=true
-startsecs=5
-stopwaitsecs=30
-stdout_logfile=/www/wwwlogs/${PROJECT_NAME}_gunicorn.log
-stderr_logfile=/www/wwwlogs/${PROJECT_NAME}_gunicorn_error.log
-user=$SERVER_USER"
-
-    echo "$SERVICE_CONF" > "$SCRIPT_DIR/${PROJECT_NAME}.ini"
-    log_info "Gunicorn 服务配置已生成: ${PROJECT_NAME}.ini"
-}
-
-upload_configs() {
-    log_info "上传配置文件..."
-    scp -P "$SSH_PORT" "$SCRIPT_DIR/nginx_bt.conf" "$SERVER_USER@$SERVER_IP:/tmp/${PROJECT_NAME}_nginx.conf"
-    scp -P "$SSH_PORT" "$SCRIPT_DIR/${PROJECT_NAME}.ini" "$SERVER_USER@$SERVER_IP:/tmp/${PROJECT_NAME}.ini"
-    log_info "配置文件上传完成"
-}
-
-main() {
-    echo "=========================================="
-    echo "  Hub 平台 - 宝塔面板一键部署脚本"
-    echo "=========================================="
-    echo
-
-    check_env
-    read_config
-    upload_code
-    run_remote_setup
-    generate_nginx_config
-    generate_service_config
-    upload_configs
-
+show_deploy_info() {
     echo
     echo "=========================================="
     echo "  部署脚本执行完成！"
     echo "=========================================="
     echo
     echo "下一步操作（在宝塔面板中）："
-    echo "1. 登录宝塔面板：http://$SERVER_IP:8888"
+    echo "1. 登录宝塔面板：http://服务器IP:8888"
     echo "2. 进入 [网站] -> [添加站点]"
-    echo "3. 域名: $SITE_DOMAIN"
-    echo "4. 根目录: $DEPLOY_PATH/vue-frontend/dist"
+    echo "3. 域名: 服务器公网IP 或 域名"
+    echo "4. 根目录: $SCRIPT_DIR/vue-frontend/dist"
     echo "5. 点击 [设置] -> [配置文件]"
-    echo "6. 替换为 /tmp/${PROJECT_NAME}_nginx.conf 的内容"
+    echo "6. 替换为 $SCRIPT_DIR/nginx_bt.conf 的内容"
     echo "7. 保存并重启 Nginx"
     echo
     echo "配置 Supervisor 守护进程："
     echo "1. 在宝塔面板中安装 Supervisor 插件"
     echo "2. 添加守护进程"
     echo "3. 名称: $PROJECT_NAME"
-    echo "4. 启动命令: $DEPLOY_PATH/venv/bin/gunicorn hub.wsgi:application --bind 127.0.0.1:8000 --workers 4"
-    echo "5. 启动目录: $DEPLOY_PATH/hub"
-    echo "6. 启动用户: $SERVER_USER"
+    echo "4. 启动命令: $SCRIPT_DIR/venv/bin/gunicorn hub.wsgi:application --bind 127.0.0.1:8000 --workers 4"
+    echo "5. 启动目录: $SCRIPT_DIR/hub"
+    echo "6. 启动用户: root"
     echo
-    echo "或者手动配置："
-    echo "  cp /tmp/${PROJECT_NAME}.ini /etc/supervisor/conf.d/"
-    echo "  supervisorctl reread"
-    echo "  supervisorctl update"
-    echo "  supervisorctl start $PROJECT_NAME"
+    echo "手动启动 Gunicorn（测试用）："
+    echo "  cd $SCRIPT_DIR/hub"
+    echo "  $SCRIPT_DIR/venv/bin/gunicorn hub.wsgi:application --bind 127.0.0.1:8000 --workers 4"
     echo
+}
+
+main() {
+    echo "=========================================="
+    echo "  Hub 平台 - 服务器本地部署脚本"
+    echo "=========================================="
+    echo
+    echo "项目路径: $SCRIPT_DIR"
+    echo
+
+    check_env
+    setup_python
+    setup_frontend
+    setup_django
+    generate_nginx_config
+    show_deploy_info
 }
 
 main
