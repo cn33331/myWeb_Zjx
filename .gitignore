@@ -7,3 +7,12 @@ media/
 static/
 .env
 .DS_Store
+node_modules/
+dist/
+*.log
+nginx/logs/
+nginx/client_body_temp/
+nginx/proxy_temp/
+nginx/fastcgi_temp/
+nginx/uwsgi_temp/
+nginx/scgi_temp/

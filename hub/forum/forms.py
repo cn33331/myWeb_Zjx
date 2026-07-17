@@ -1,30 +1,5 @@
 from django import forms
-from .models import ForumUser, Topic, Post
-
-
-class RegisterForm(forms.Form):
-    username = forms.CharField(
-        max_length=50,
-        widget=forms.TextInput(attrs={'placeholder': '用户名'})
-    )
-    password = forms.CharField(
-        max_length=255,
-        widget=forms.PasswordInput(attrs={'placeholder': '密码'})
-    )
-    email = forms.EmailField(
-        widget=forms.EmailInput(attrs={'placeholder': '邮箱'})
-    )
-
-
-class LoginForm(forms.Form):
-    username = forms.CharField(
-        max_length=50,
-        widget=forms.TextInput(attrs={'placeholder': '用户名'})
-    )
-    password = forms.CharField(
-        max_length=255,
-        widget=forms.PasswordInput(attrs={'placeholder': '密码'})
-    )
+from .models import Topic, Post
 
 
 class TopicForm(forms.ModelForm):

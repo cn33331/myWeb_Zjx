@@ -10,7 +10,8 @@ DJANGO_SETTINGS_MODULE="hub.settings"
 PYTHON_BIN=""
 PIP_INDEX_URL="${PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}"
 HOST="${HOST:-0.0.0.0}"
-PORT="${PORT:-80}"
+PORT="${PORT:-8000}"
+MODE="${MODE:-development}"
 
 log_info() {
     echo -e "\033[32m[INFO]\033[0m $1"
@@ -56,8 +57,8 @@ install_dependencies() {
     fi
 
     if ! $VENV_PYTHON -c "import django" &> /dev/null; then
-        log_info "安装 Django 依赖（使用镜像源: $PIP_INDEX_URL）..."
-        "$VENV_DIR/bin/pip" install -i "$PIP_INDEX_URL" django
+        log_info "安装依赖（使用镜像源: $PIP_INDEX_URL）..."
+        "$VENV_DIR/bin/pip" install -i "$PIP_INDEX_URL" -r "$SCRIPT_DIR/requirements.txt"
         log_info "依赖安装完成"
     else
         log_info "Django 已安装: $($VENV_PYTHON -c "import django; print(django.VERSION)")"
@@ -69,6 +70,13 @@ run_migrations() {
     cd "$PROJECT_DIR"
     "$VENV_DIR/bin/python" manage.py migrate --noinput
     log_info "数据库迁移完成"
+}
+
+collect_static() {
+    log_info "收集静态文件..."
+    cd "$PROJECT_DIR"
+    "$VENV_DIR/bin/python" manage.py collectstatic --noinput
+    log_info "静态文件收集完成"
 }
 
 check_admin_user() {
@@ -101,66 +109,31 @@ print('管理员账号创建成功:', user.username)
 "
             log_info "管理员账号创建完成"
         else
-            log_warn "跳过管理员账号创建，您可以稍后手动创建："
-            log_warn "  $VENV_DIR/bin/python manage.py createsuperuser"
+            log_warn "跳过管理员账号创建"
         fi
     fi
 }
 
-check_port() {
-    log_info "检查端口 $PORT 是否被占用..."
-
-    local PIDS=""
-    if command -v lsof &> /dev/null; then
-        PIDS=$(lsof -ti tcp:$PORT 2>/dev/null || true)
-    elif command -v ss &> /dev/null; then
-        PIDS=$(ss -tlnp "sport = :$PORT" 2>/dev/null | grep -oP 'pid=\K[0-9]+' || true)
-    elif command -v netstat &> /dev/null; then
-        PIDS=$(netstat -tlnp 2>/dev/null | grep ":$PORT " | awk '{print $7}' | cut -d'/' -f1 || true)
-    fi
-
-    if [ -z "$PIDS" ]; then
-        log_info "端口 $PORT 空闲"
-        return 0
-    fi
-
-    log_warn "端口 $PORT 已被以下进程占用:"
-    for pid in $PIDS; do
-        if [ -n "$pid" ]; then
-            local cmd=""
-            if command -v ps &> /dev/null; then
-                cmd=$(ps -p $pid -o comm= 2>/dev/null || echo "unknown")
-            fi
-            log_warn "  PID: $pid  命令: $cmd"
-        fi
-    done
-
-    echo
-    read -p "是否结束这些进程并释放端口？(y/n): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        log_info "正在结束占用端口 $PORT 的进程..."
-        for pid in $PIDS; do
-            if [ -n "$pid" ]; then
-                kill -9 $pid 2>/dev/null || true
-            fi
-        done
-        sleep 1
-        log_info "端口 $PORT 已释放"
-    else
-        log_error "用户取消，启动终止"
-        exit 1
-    fi
-}
-
-start_server() {
+start_dev_server() {
     log_info "启动 Django 开发服务器..."
     log_info "监听地址: http://$HOST:$PORT"
     log_info "管理后台: http://$HOST:$PORT/admin"
+    log_info "API 地址: http://$HOST:$PORT/api/"
     log_info "按 Ctrl+C 停止服务器"
     echo
     cd "$PROJECT_DIR"
     "$VENV_DIR/bin/python" manage.py runserver "$HOST:$PORT"
+}
+
+start_production_server() {
+    log_info "启动 Gunicorn 生产服务器..."
+    log_info "监听地址: http://$HOST:$PORT"
+    log_info "管理后台: http://$HOST:$PORT/admin"
+    log_info "API 地址: http://$HOST:$PORT/api/"
+    log_info "按 Ctrl+C 停止服务器"
+    echo
+    cd "$PROJECT_DIR"
+    "$VENV_DIR/bin/gunicorn" hub.wsgi:application --bind "$HOST:$PORT" --workers 4
 }
 
 main() {
@@ -168,14 +141,25 @@ main() {
     echo "  Hub - 多功能 Web 平台启动脚本"
     echo "=========================================="
     echo
+    echo "当前模式: $MODE"
+    echo
 
     detect_python
     check_venv
     install_dependencies
     run_migrations
+    
+    if [ "$MODE" = "production" ]; then
+        collect_static
+    fi
+    
     check_admin_user
-    check_port
-    start_server
+
+    if [ "$MODE" = "production" ]; then
+        start_production_server
+    else
+        start_dev_server
+    fi
 }
 
 main
