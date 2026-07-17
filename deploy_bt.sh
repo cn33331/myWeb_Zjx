@@ -3,7 +3,12 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$SCRIPT_DIR/hub"
+VENV_DIR="$SCRIPT_DIR/venv"
 PROJECT_NAME="hub"
+
+PYTHON_BIN=""
+PIP_INDEX_URL="${PIP_INDEX_URL:-https://pypi.tuna.tsinghua.edu.cn/simple}"
 
 log_info() {
     echo -e "\033[32m[INFO]\033[0m $1"
@@ -17,13 +22,23 @@ log_error() {
     echo -e "\033[31m[ERROR]\033[0m $1"
 }
 
+detect_python() {
+    log_info "检测 Python 环境..."
+    if command -v python3 &> /dev/null; then
+        PYTHON_BIN="python3"
+    elif command -v python &> /dev/null; then
+        PYTHON_BIN="python"
+    else
+        log_error "未找到 Python，请先安装 Python 3.x"
+        exit 1
+    fi
+    log_info "使用 Python: $($PYTHON_BIN --version)"
+}
+
 check_env() {
     log_info "检查服务器环境..."
     
-    if ! command -v python3 &> /dev/null; then
-        log_error "未找到 python3，请先安装 Python 3.x"
-        exit 1
-    fi
+    detect_python
     
     if ! command -v npm &> /dev/null; then
         log_error "未找到 npm，请先安装 Node.js"
@@ -33,31 +48,36 @@ check_env() {
     log_info "服务器环境检查通过"
 }
 
-setup_python() {
-    log_info "配置 Python 环境..."
-    
-    VENV_DIR="$SCRIPT_DIR/venv"
-    PYTHON_BIN="/www/server/panel/pyenv/bin/python3"
-
-    if [ ! -f "$PYTHON_BIN" ]; then
-        log_warn "宝塔 Python 环境未找到，使用系统 Python..."
-        PYTHON_BIN="python3"
-    fi
-
-    log_info "使用 Python: $($PYTHON_BIN --version)"
-
-    if [ ! -d "$VENV_DIR" ]; then
+check_venv() {
+    if [ -d "$VENV_DIR" ]; then
+        log_info "虚拟环境已存在: $VENV_DIR"
+    else
         log_info "创建虚拟环境..."
         $PYTHON_BIN -m venv "$VENV_DIR"
         log_info "虚拟环境创建成功"
     fi
+}
 
-    log_info "安装 Python 依赖..."
-    "$VENV_DIR/bin/pip" install -i https://pypi.tuna.tsinghua.edu.cn/simple -r "$SCRIPT_DIR/requirements.txt"
-    log_info "Python 依赖安装完成"
+install_dependencies() {
+    log_info "检查依赖..."
+    VENV_PYTHON="$VENV_DIR/bin/python"
+    if [ ! -f "$VENV_PYTHON" ]; then
+        log_error "虚拟环境 Python 解释器不存在"
+        exit 1
+    fi
 
+    if ! $VENV_PYTHON -c "import django" &> /dev/null; then
+        log_info "安装依赖（使用镜像源: $PIP_INDEX_URL）..."
+        "$VENV_DIR/bin/pip" install -i "$PIP_INDEX_URL" -r "$SCRIPT_DIR/requirements.txt"
+        log_info "依赖安装完成"
+    else
+        log_info "Django 已安装: $($VENV_PYTHON -c "import django; print(django.VERSION)")"
+    fi
+}
+
+install_gunicorn() {
     log_info "安装 Gunicorn..."
-    "$VENV_DIR/bin/pip" install -i https://pypi.tuna.tsinghua.edu.cn/simple gunicorn
+    "$VENV_DIR/bin/pip" install -i "$PIP_INDEX_URL" gunicorn
     log_info "Gunicorn 安装完成"
 }
 
@@ -77,21 +97,24 @@ setup_frontend() {
     cd "$SCRIPT_DIR"
 }
 
-setup_django() {
-    log_info "配置 Django..."
-    
-    cd "$SCRIPT_DIR/hub"
-    
+run_migrations() {
     log_info "执行数据库迁移..."
-    "$SCRIPT_DIR/venv/bin/python" manage.py migrate --noinput
+    cd "$PROJECT_DIR"
+    "$VENV_DIR/bin/python" manage.py migrate --noinput
     log_info "数据库迁移完成"
+}
 
+collect_static() {
     log_info "收集静态文件..."
-    "$SCRIPT_DIR/venv/bin/python" manage.py collectstatic --noinput
+    cd "$PROJECT_DIR"
+    "$VENV_DIR/bin/python" manage.py collectstatic --noinput
     log_info "静态文件收集完成"
+}
 
+check_admin_user() {
     log_info "检查管理员账号..."
-    ADMIN_EXISTS=$("$SCRIPT_DIR/venv/bin/python" manage.py shell -c "
+    cd "$PROJECT_DIR"
+    ADMIN_EXISTS=$("$VENV_DIR/bin/python" manage.py shell -c "
 from django.contrib.auth.models import User
 if User.objects.filter(is_superuser=True).exists():
     print('yes')
@@ -111,7 +134,7 @@ else:
             read -p "请输入邮箱: " ADMIN_EMAIL
             read -s -p "请输入密码: " ADMIN_PASS
             echo
-            "$SCRIPT_DIR/venv/bin/python" manage.py shell -c "
+            "$VENV_DIR/bin/python" manage.py shell -c "
 from django.contrib.auth.models import User
 user = User.objects.create_superuser('$ADMIN_USER', '$ADMIN_EMAIL', '$ADMIN_PASS')
 print('管理员账号创建成功:', user.username)
@@ -140,12 +163,12 @@ generate_nginx_config() {
     client_max_body_size 50M;
 
     location /static/ {
-        root $SCRIPT_DIR/hub;
+        root $PROJECT_DIR;
         expires 30d;
     }
 
     location /media/ {
-        root $SCRIPT_DIR/hub;
+        root $PROJECT_DIR;
     }
 
     location /api/ {
@@ -185,6 +208,9 @@ show_deploy_info() {
     echo "  部署脚本执行完成！"
     echo "=========================================="
     echo
+    echo "项目路径: $SCRIPT_DIR"
+    echo "虚拟环境: $VENV_DIR"
+    echo
     echo "下一步操作（在宝塔面板中）："
     echo "1. 登录宝塔面板：http://服务器IP:8888"
     echo "2. 进入 [网站] -> [添加站点]"
@@ -198,13 +224,13 @@ show_deploy_info() {
     echo "1. 在宝塔面板中安装 Supervisor 插件"
     echo "2. 添加守护进程"
     echo "3. 名称: $PROJECT_NAME"
-    echo "4. 启动命令: $SCRIPT_DIR/venv/bin/gunicorn hub.wsgi:application --bind 127.0.0.1:8000 --workers 4"
-    echo "5. 启动目录: $SCRIPT_DIR/hub"
+    echo "4. 启动命令: $VENV_DIR/bin/gunicorn hub.wsgi:application --bind 127.0.0.1:8000 --workers 4"
+    echo "5. 启动目录: $PROJECT_DIR"
     echo "6. 启动用户: root"
     echo
     echo "手动启动 Gunicorn（测试用）："
-    echo "  cd $SCRIPT_DIR/hub"
-    echo "  $SCRIPT_DIR/venv/bin/gunicorn hub.wsgi:application --bind 127.0.0.1:8000 --workers 4"
+    echo "  cd $PROJECT_DIR"
+    echo "  $VENV_DIR/bin/gunicorn hub.wsgi:application --bind 127.0.0.1:8000 --workers 4"
     echo
 }
 
@@ -213,13 +239,15 @@ main() {
     echo "  Hub 平台 - 服务器本地部署脚本"
     echo "=========================================="
     echo
-    echo "项目路径: $SCRIPT_DIR"
-    echo
 
     check_env
-    setup_python
+    check_venv
+    install_dependencies
+    install_gunicorn
     setup_frontend
-    setup_django
+    run_migrations
+    collect_static
+    check_admin_user
     generate_nginx_config
     show_deploy_info
 }
