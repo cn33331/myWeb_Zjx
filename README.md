@@ -971,3 +971,192 @@ certbot renew --dry-run
 4. **认证状态**：前端使用 `localStorage` 存储 Token，路由守卫校验登录状态
 5. **开发调试**：前端开发时使用 Vite 代理，无需配置 Nginx；生产环境使用 Nginx 反向代理
 6. **数据库**：Django 继续使用原有 `db.sqlite3`，无需额外数据库配置
+
+---
+
+## 本地部署指南
+
+### macOS 本地部署
+
+适用于开发调试和本地体验，使用 `启动服务.command` 脚本一键启动前后端。
+
+#### 环境要求
+
+- Python 3.9+
+- Node.js 18+
+- npm 9+
+
+#### 部署步骤
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/cn33331/myWeb_Zjx.git web
+cd web
+
+# 2. 赋予启动脚本执行权限
+chmod +x 启动服务.command start.sh deploy_bt.sh
+
+# 3. 一键启动前后端（推荐）
+./启动服务.command
+```
+
+脚本会自动完成：
+- 创建 Python 虚拟环境（venv）
+- 安装 Python 依赖（Django、DRF、JWT、CORS 等）
+- 安装前端依赖并构建
+- 执行数据库迁移
+- 启动 Django 后端（http://localhost:8000）
+- 启动 Vite 前端（http://localhost:5173）
+
+#### 手动分步启动
+
+```bash
+# 后端
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+cd hub
+python manage.py migrate
+python manage.py runserver 127.0.0.1:8000
+
+# 前端（新终端）
+cd vue-frontend
+npm install
+npm run dev
+```
+
+#### 访问地址
+
+| 服务 | 地址 |
+|------|------|
+| 前端页面 | http://localhost:5173/ |
+| Django 管理 | http://localhost:8000/admin |
+| API 接口 | http://localhost:8000/api/ |
+
+---
+
+### Linux 本地部署（宝塔面板环境）
+
+适用于腾讯云 OpenCloudOS 9 + 宝塔面板 11.0.0 的生产环境部署。
+
+#### 环境要求
+
+- Python 3.11+（宝塔自带或系统安装）
+- Node.js 18+
+- 宝塔面板 + Nginx
+- 已开放 80 端口（安全组 + 系统防火墙）
+
+#### 部署步骤
+
+```bash
+# 1. 克隆项目到服务器
+cd /root/zjx
+git clone https://github.com/cn33331/myWeb_Zjx.git web
+cd web
+
+# 2. 赋予执行权限
+chmod +x deploy_bt.sh start.sh
+
+# 3. 执行一键部署脚本
+./deploy_bt.sh
+```
+
+部署脚本会自动完成：
+- 检测 Python 和 Node.js 环境
+- 创建虚拟环境并安装依赖（含 Gunicorn）
+- 安装前端依赖并构建（npm run build）
+- 执行数据库迁移和静态文件收集
+- 提示创建管理员账号
+- 生成 Nginx 配置文件（nginx_bt.conf）
+
+#### 配置 Gunicorn 服务（systemd）
+
+```bash
+# 创建 systemd 服务
+cat > /etc/systemd/system/hub.service << 'EOF'
+[Unit]
+Description=Hub Platform Gunicorn Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/zjx/web/web/hub
+ExecStart=/root/zjx/web/web/venv/bin/gunicorn hub.wsgi:application --bind 127.0.0.1:8000 --workers 4
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# 启动并设置开机自启
+systemctl daemon-reload
+systemctl start hub
+systemctl enable hub
+systemctl status hub
+```
+
+#### 配置 Nginx 反向代理
+
+```bash
+# 复制 Nginx 配置到宝塔站点目录
+cp /root/zjx/web/web/nginx_bt.conf /www/server/panel/vhost/nginx/hub.conf
+
+# 检查配置语法
+/www/server/nginx/sbin/nginx -t
+
+# 重启 Nginx
+/www/server/nginx/sbin/nginx -s reload
+```
+
+或在宝塔面板中操作：
+1. 登录宝塔面板：http://服务器IP:8888
+2. 网站 → 添加站点 → 域名填服务器公网IP → 根目录选 `/root/zjx/web/web/vue-frontend/dist`
+3. 站点设置 → 配置文件 → 替换为 `nginx_bt.conf` 的内容
+4. 保存并重启 Nginx
+
+#### 验证服务
+
+```bash
+# 检查 Gunicorn 服务状态
+systemctl status hub
+
+# 检查 8000 端口监听
+netstat -tlnp | grep 8000
+
+# 本地测试 API
+curl http://127.0.0.1:8000/api/store/tools/
+
+# 公网测试（需配置完 Nginx）
+curl http://服务器公网IP/api/store/tools/
+```
+
+#### 访问地址
+
+| 服务 | 地址 |
+|------|------|
+| 前端页面 | http://服务器公网IP/ |
+| Django 管理 | http://服务器公网IP/admin |
+| API 接口 | http://服务器公网IP/api/ |
+| 宝塔面板 | http://服务器公网IP:8888 |
+
+#### 常用运维命令
+
+```bash
+# 重启 Gunicorn 服务
+systemctl restart hub
+
+# 查看 Gunicorn 日志
+journalctl -u hub -f
+
+# 更新代码后重新部署
+cd /root/zjx/web/web
+git pull origin main
+./deploy_bt.sh
+systemctl restart hub
+
+# 重新构建前端
+cd /root/zjx/web/web/vue-frontend
+npm run build
+```
