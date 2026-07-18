@@ -55,7 +55,7 @@ const handleLogin = async () => {
 <style scoped>
 .login-page {
   min-height: calc(100vh - 80px);
-  background: #f3f4f6;
+  background: #f5f5f5;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -64,21 +64,21 @@ const handleLogin = async () => {
 
 .container {
   width: 100%;
-  max-width: 400px;
-  padding: 0 20px;
+  max-width: 420px;
+  padding: 0 24px;
 }
 
 .login-form {
-  background: white;
-  border-radius: 12px;
-  padding: 32px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  background: #ffffff;
+  border-radius: 4px;
+  padding: 40px 32px;
+  border: 1px solid #e0e0e0;
 }
 
 .login-form h1 {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1f2937;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
   margin: 0 0 32px 0;
   text-align: center;
 }
@@ -93,56 +93,60 @@ const handleLogin = async () => {
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: #444444;
   margin-bottom: 8px;
 }
 
 .form-input {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s;
   box-sizing: border-box;
+  background: #ffffff;
 }
 
 .form-input:focus {
-  border-color: #3b82f6;
+  border-color: #1a1a1a;
+}
+
+.form-input::placeholder {
+  color: #999999;
 }
 
 .error-message {
-  color: #ef4444;
-  font-size: 14px;
-  padding: 12px;
-  background: #fee2e2;
-  border-radius: 6px;
+  color: #d44;
+  font-size: 13px;
+  padding: 10px 12px;
+  background: #faf0f0;
+  border-radius: 4px;
+  border: 1px solid #f0d0d0;
 }
 
 .btn {
   padding: 12px 32px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 500;
   border: none;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-primary {
-  background: #3b82f6;
-  color: white;
+  background: #1a1a1a;
+  color: #ffffff;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #2563eb;
+  background: #333333;
 }
 
 .btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
-
-
 </style>

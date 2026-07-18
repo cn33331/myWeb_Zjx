@@ -70,22 +70,22 @@ const handleSubmit = async () => {
 <style scoped>
 .upload-page {
   min-height: calc(100vh - 80px);
-  background: #f3f4f6;
-  padding: 40px 0;
+  background: #f5f5f5;
+  padding: 48px 0;
 }
 
 .container {
-  max-width: 600px;
+  max-width: 550px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px;
 }
 
 .back-btn {
   padding: 8px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: white;
-  color: #374151;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #444444;
   cursor: pointer;
   font-size: 14px;
   margin-bottom: 24px;
@@ -93,20 +93,21 @@ const handleSubmit = async () => {
 }
 
 .back-btn:hover {
-  background: #f9fafb;
+  border-color: #1a1a1a;
+  color: #1a1a1a;
 }
 
 .upload-form {
-  background: white;
-  border-radius: 12px;
-  padding: 32px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  border-radius: 4px;
+  padding: 40px 32px;
+  border: 1px solid #e0e0e0;
 }
 
 .upload-form h1 {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1f2937;
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
   margin: 0 0 32px 0;
 }
 
@@ -120,83 +121,94 @@ const handleSubmit = async () => {
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: #444444;
   margin-bottom: 8px;
 }
 
 .form-input {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s;
   box-sizing: border-box;
+  background: #ffffff;
 }
 
 .form-input:focus {
-  border-color: #3b82f6;
+  border-color: #1a1a1a;
+}
+
+.form-input::placeholder {
+  color: #999999;
 }
 
 .form-textarea {
   width: 100%;
   padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s;
   box-sizing: border-box;
   resize: vertical;
+  background: #ffffff;
 }
 
 .form-textarea:focus {
-  border-color: #3b82f6;
+  border-color: #1a1a1a;
+}
+
+.form-textarea::placeholder {
+  color: #999999;
 }
 
 .form-file {
   width: 100%;
   padding: 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s;
+  background: #ffffff;
 }
 
 .form-file:focus {
-  border-color: #3b82f6;
+  border-color: #1a1a1a;
 }
 
 .file-name {
   display: block;
   font-size: 14px;
-  color: #3b82f6;
+  color: #444444;
   margin-top: 8px;
 }
 
 .btn {
   padding: 12px 32px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 500;
   border: none;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-primary {
-  background: #3b82f6;
-  color: white;
+  background: #1a1a1a;
+  color: #ffffff;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #2563eb;
+  background: #333333;
 }
 
 .btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 </style>

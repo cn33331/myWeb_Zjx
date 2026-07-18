@@ -15,7 +15,7 @@
           :tool="tool" 
         />
         <div v-if="filteredTools.length === 0" class="empty-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
@@ -54,14 +54,14 @@ onMounted(() => {
 <style scoped>
 .store-page {
   min-height: calc(100vh - 80px);
-  background: #f3f4f6;
-  padding: 40px 0;
+  background: #f5f5f5;
+  padding: 48px 0;
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 800px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px;
 }
 
 .page-header {
@@ -72,42 +72,48 @@ onMounted(() => {
 }
 
 .page-header h1 {
-  font-size: 32px;
-  font-weight: 700;
-  color: #1f2937;
+  font-size: 28px;
+  font-weight: 600;
+  color: #1a1a1a;
   margin: 0;
 }
 
 .search-bar {
-  flex: 0 0 300px;
+  flex: 0 0 280px;
 }
 
 .search-input {
   width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  padding: 10px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
   font-size: 14px;
   outline: none;
   transition: border-color 0.2s;
+  background: #ffffff;
 }
 
 .search-input:focus {
-  border-color: #3b82f6;
+  border-color: #1a1a1a;
+}
+
+.search-input::placeholder {
+  color: #999999;
 }
 
 .tools-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .empty-state {
-  background: white;
-  border-radius: 12px;
+  background: #ffffff;
+  border-radius: 4px;
   padding: 60px;
   text-align: center;
-  color: #9ca3af;
+  color: #999999;
+  border: 1px solid #e0e0e0;
 }
 
 .empty-state svg {
@@ -118,6 +124,6 @@ onMounted(() => {
 
 .empty-state p {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
 }
 </style>

@@ -12,7 +12,7 @@
           <template v-if="authStore.isAuthenticated">
             <span class="username">{{ authStore.username }}</span>
             <button v-if="authStore.isStaff" @click="$router.push('/store/upload')" class="btn btn-secondary">上传</button>
-            <button @click="logout" class="btn btn-danger">退出</button>
+            <button @click="logout" class="btn btn-outline">退出</button>
           </template>
           <template v-else>
             <router-link to="/login" class="btn btn-primary">登录</router-link>
@@ -36,16 +36,15 @@ const logout = () => {
 
 <style scoped>
 .header {
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-  color: white;
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
   padding: 16px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px;
 }
 
 .header-content {
@@ -56,8 +55,8 @@ const logout = () => {
 
 .logo {
   font-size: 24px;
-  font-weight: bold;
-  color: white;
+  font-weight: 700;
+  color: #1a1a1a;
   text-decoration: none;
 }
 
@@ -67,15 +66,16 @@ const logout = () => {
 }
 
 .nav-link {
-  color: rgba(255, 255, 255, 0.9);
+  color: #666666;
   text-decoration: none;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 500;
   transition: color 0.2s;
 }
 
 .nav-link:hover,
 .nav-link.active {
-  color: white;
+  color: #1a1a1a;
 }
 
 .auth {
@@ -86,12 +86,12 @@ const logout = () => {
 
 .username {
   font-size: 14px;
-  font-weight: 500;
+  color: #444444;
 }
 
 .btn {
-  padding: 8px 16px;
-  border-radius: 6px;
+  padding: 8px 18px;
+  border-radius: 4px;
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
@@ -101,30 +101,31 @@ const logout = () => {
 }
 
 .btn-primary {
-  background: white;
-  color: #3b82f6;
+  background: #1a1a1a;
+  color: #ffffff;
 }
 
 .btn-primary:hover {
-  background: rgba(255, 255, 255, 0.9);
+  background: #333333;
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: #f5f5f5;
+  color: #1a1a1a;
 }
 
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: #e8e8e8;
 }
 
-.btn-danger {
-  background: rgba(239, 68, 68, 0.8);
-  color: white;
+.btn-outline {
+  background: transparent;
+  color: #666666;
+  border: 1px solid #e0e0e0;
 }
 
-.btn-danger:hover {
-  background: rgba(239, 68, 68, 1);
+.btn-outline:hover {
+  border-color: #1a1a1a;
+  color: #1a1a1a;
 }
 </style>

@@ -6,7 +6,7 @@
       <div class="tool-detail">
         <div class="tool-header">
           <div class="tool-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M4 7h16M4 17h16M10 12h4M4 12h2M18 12h2" />
             </svg>
           </div>
@@ -28,7 +28,7 @@
           
           <div class="actions">
             <button @click="handleDownload" class="btn btn-primary">下载工具</button>
-            <button v-if="authStore.isStaff" @click="handleDelete" class="btn btn-danger">删除工具</button>
+            <button v-if="authStore.isStaff" @click="handleDelete" class="btn btn-outline">删除工具</button>
           </div>
         </div>
       </div>
@@ -73,22 +73,22 @@ onMounted(() => {
 <style scoped>
 .tool-detail-page {
   min-height: calc(100vh - 80px);
-  background: #f3f4f6;
-  padding: 40px 0;
+  background: #f5f5f5;
+  padding: 48px 0;
 }
 
 .container {
-  max-width: 800px;
+  max-width: 700px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px;
 }
 
 .back-btn {
   padding: 8px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: white;
-  color: #374151;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #444444;
   cursor: pointer;
   font-size: 14px;
   margin-bottom: 24px;
@@ -96,14 +96,15 @@ onMounted(() => {
 }
 
 .back-btn:hover {
-  background: #f9fafb;
+  border-color: #1a1a1a;
+  color: #1a1a1a;
 }
 
 .tool-detail {
-  background: white;
-  border-radius: 12px;
-  padding: 32px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: #ffffff;
+  border-radius: 4px;
+  padding: 40px;
+  border: 1px solid #e0e0e0;
 }
 
 .tool-header {
@@ -114,26 +115,26 @@ onMounted(() => {
 }
 
 .tool-icon {
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
-  border-radius: 16px;
+  width: 72px;
+  height: 72px;
+  background: #f5f5f5;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: #666666;
   flex-shrink: 0;
 }
 
 .tool-icon svg {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
 }
 
 .tool-info h1 {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1f2937;
+  font-size: 26px;
+  font-weight: 600;
+  color: #1a1a1a;
   margin: 0 0 16px 0;
 }
 
@@ -141,59 +142,62 @@ onMounted(() => {
   display: flex;
   gap: 24px;
   font-size: 14px;
-  color: #6b7280;
+  color: #666666;
+  flex-wrap: wrap;
 }
 
 .tool-content {
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #e0e0e0;
   padding-top: 32px;
 }
 
 .description h2 {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
-  color: #1f2937;
+  color: #1a1a1a;
   margin: 0 0 16px 0;
 }
 
 .description p {
-  font-size: 16px;
-  color: #4b5563;
+  font-size: 15px;
+  color: #444444;
   line-height: 1.8;
   margin: 0;
 }
 
 .actions {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   margin-top: 32px;
 }
 
 .btn {
   padding: 12px 32px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: 500;
   border: none;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn-primary {
-  background: #3b82f6;
-  color: white;
+  background: #1a1a1a;
+  color: #ffffff;
 }
 
 .btn-primary:hover {
-  background: #2563eb;
+  background: #333333;
 }
 
-.btn-danger {
-  background: #ef4444;
-  color: white;
+.btn-outline {
+  background: transparent;
+  color: #666666;
+  border: 1px solid #e0e0e0;
 }
 
-.btn-danger:hover {
-  background: #dc2626;
+.btn-outline:hover {
+  border-color: #d44;
+  color: #d44;
 }
 </style>
