@@ -227,9 +227,15 @@ $ADMIN_ACCESS_RULES
     log_info "Nginx 配置已写入: $NGINX_VHOST_CONF"
     
     if nginx -t 2>&1 | grep -q "test is successful"; then
-        log_info "Nginx 配置语法检查通过，重启 Nginx..."
-        systemctl restart nginx
-        log_info "Nginx 重启完成"
+        log_info "Nginx 配置语法检查通过"
+        log_info "请手动执行以下命令以应用配置："
+        echo
+        echo "  # 1. 重启 Gunicorn 服务"
+        echo "  systemctl restart hub"
+        echo
+        echo "  # 2. 重载 Nginx 配置"
+        echo "  /www/server/nginx/sbin/nginx -t && /www/server/nginx/sbin/nginx -s reload"
+        echo
     else
         log_error "Nginx 配置语法检查失败，请检查配置文件"
         nginx -t
