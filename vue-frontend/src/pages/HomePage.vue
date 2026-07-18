@@ -21,15 +21,6 @@
           <h3>工具商店</h3>
           <p>发现和下载各种实用工具，支持一键上传分享</p>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-          </div>
-          <h3>安全认证</h3>
-          <p>基于JWT的安全认证系统，保护您的账户安全</p>
-        </div>
       </div>
     </section>
   </div>
@@ -98,8 +89,9 @@
 
 .features .container {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 24px;
+  max-width: 600px;
 }
 
 .feature-card {
