@@ -154,6 +154,23 @@ generate_nginx_config() {
     read -p "请输入服务器公网IP: " SERVER_IP
     read -p "请输入站点域名(可选): " SITE_DOMAIN
     
+    log_info "Admin 访问控制配置"
+    echo "为了安全，建议限制仅允许特定 IP 访问 Admin 后台"
+    echo "多个 IP 用空格分隔，例如: 114.114.114.114 192.168.1.100"
+    read -p "请输入允许访问 Admin 的 IP 地址(回车跳过，不限制): " ADMIN_ALLOW_IPS
+    
+    ADMIN_ACCESS_RULES=""
+    if [ -n "$ADMIN_ALLOW_IPS" ]; then
+        for ip in $ADMIN_ALLOW_IPS; do
+            ADMIN_ACCESS_RULES="$ADMIN_ACCESS_RULES
+        allow $ip;"
+        done
+        ADMIN_ACCESS_RULES="$ADMIN_ACCESS_RULES
+        deny all;"
+    else
+        log_warn "未设置 Admin IP 白名单，所有 IP 均可访问 /admin/"
+    fi
+    
     NGINX_CONF="server {
     listen 80;
     listen [::]:80;
@@ -182,6 +199,7 @@ generate_nginx_config() {
     }
 
     location /admin/ {
+$ADMIN_ACCESS_RULES
         proxy_pass http://127.0.0.1:8000;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
