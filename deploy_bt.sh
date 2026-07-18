@@ -216,8 +216,24 @@ $ADMIN_ACCESS_RULES
     error_log /www/wwwlogs/${PROJECT_NAME}_error.log;
 }"
 
-    echo "$NGINX_CONF" > "$SCRIPT_DIR/nginx_bt.conf"
-    log_info "Nginx 配置已生成: $SCRIPT_DIR/nginx_bt.conf"
+    NGINX_VHOST_CONF="/www/server/panel/vhost/nginx/${SERVER_IP}.conf"
+    
+    if [ -f "$NGINX_VHOST_CONF" ]; then
+        log_info "备份原有配置: ${NGINX_VHOST_CONF}.bak"
+        cp "$NGINX_VHOST_CONF" "${NGINX_VHOST_CONF}.bak"
+    fi
+    
+    echo "$NGINX_CONF" > "$NGINX_VHOST_CONF"
+    log_info "Nginx 配置已写入: $NGINX_VHOST_CONF"
+    
+    if nginx -t 2>&1 | grep -q "test is successful"; then
+        log_info "Nginx 配置语法检查通过，重启 Nginx..."
+        systemctl restart nginx
+        log_info "Nginx 重启完成"
+    else
+        log_error "Nginx 配置语法检查失败，请检查配置文件"
+        nginx -t
+    fi
 }
 
 show_deploy_info() {
@@ -228,23 +244,16 @@ show_deploy_info() {
     echo
     echo "项目路径: $SCRIPT_DIR"
     echo "虚拟环境: $VENV_DIR"
+    echo "Nginx 配置: /www/server/panel/vhost/nginx/${SERVER_IP}.conf"
     echo
-    echo "下一步操作（在宝塔面板中）："
+    echo "配置 Supervisor 守护进程（宝塔面板）："
     echo "1. 登录宝塔面板：http://服务器IP:8888"
-    echo "2. 进入 [网站] -> [添加站点]"
-    echo "3. 域名: 服务器公网IP 或 域名"
-    echo "4. 根目录: $SCRIPT_DIR/vue-frontend/dist"
-    echo "5. 点击 [设置] -> [配置文件]"
-    echo "6. 替换为 $SCRIPT_DIR/nginx_bt.conf 的内容"
-    echo "7. 保存并重启 Nginx"
-    echo
-    echo "配置 Supervisor 守护进程："
-    echo "1. 在宝塔面板中安装 Supervisor 插件"
-    echo "2. 添加守护进程"
-    echo "3. 名称: $PROJECT_NAME"
-    echo "4. 启动命令: $VENV_DIR/bin/gunicorn hub.wsgi:application --bind 127.0.0.1:8000 --workers 4"
-    echo "5. 启动目录: $PROJECT_DIR"
-    echo "6. 启动用户: root"
+    echo "2. 安装 Supervisor 插件"
+    echo "3. 添加守护进程"
+    echo "   - 名称: $PROJECT_NAME"
+    echo "   - 启动命令: $VENV_DIR/bin/gunicorn hub.wsgi:application --bind 127.0.0.1:8000 --workers 4"
+    echo "   - 启动目录: $PROJECT_DIR"
+    echo "   - 启动用户: root"
     echo
     echo "手动启动 Gunicorn（测试用）："
     echo "  cd $PROJECT_DIR"
