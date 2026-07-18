@@ -1,6 +1,6 @@
 # Hub - 多功能 Web 平台
 
-基于 Django + Vue 3 的工具应用商店平台，采用前后端分离架构。
+基于 Django + Vue 3 的web平台，采用前后端分离架构。平台包含应用商店、中转站、管理后台等功能。
 
 ## 平台模块
 
@@ -8,6 +8,7 @@
 | --- | --- | --- | --- |
 | 首页入口 | `/` | `home` | 展示平台入口 |
 | 应用商店 | `/store/` | `store` | 工具的上传、下载与详情查看 |
+| 中转站 | `/transfer/` | `transfer` | 文件传输导航与记录管理 |
 | 管理后台 | `/admin/` | Django Admin | 站点管理 |
 | API 接口 | `/api/` | DRF | RESTful API 服务 |
 
@@ -59,7 +60,8 @@ web/
 │   │   ├── auth_serializers.py
 │   │   └── auth_urls.py
 │   ├── home/                 # 首页入口应用
-│   └── store/                # 应用商店模块
+  │   ├── store/                # 应用商店模块
+  │   └── transfer/             # 中转站模块（传输记录管理）
 │       ├── models.py
 │       ├── api/              # REST API（serializers/views/urls）
 │       └── templates/store/
@@ -93,6 +95,11 @@ web/
 - 工具下载（带下载次数统计）
 - 工具详情查看
 
+### 临时中转站（transfer）
+- 快速导航至 AirPortal 空投和文叔叔文件传输网站
+- 记录文件传输信息（取件码、取件链接、文件名、文件大小）
+- 传输记录的添加、查看与删除
+
 ## API 接口总览
 
 | 模块 | API 路径 | 方法 | 说明 | 认证 |
@@ -104,6 +111,11 @@ web/
 | 商店 | `/api/store/tools/<id>/` | GET | 工具详情 | 公开 |
 | 商店 | `/api/store/tools/<id>/` | DELETE | 删除工具 | 管理员 |
 | 商店 | `/api/store/tools/<id>/download/` | GET | 工具下载 | 公开 |
+| 中转站 | `/api/transfer/records/` | GET | 传输记录列表 | 公开 |
+| 中转站 | `/api/transfer/records/` | POST | 添加传输记录 | 公开 |
+| 中转站 | `/api/transfer/records/<id>/` | GET | 传输记录详情 | 公开 |
+| 中转站 | `/api/transfer/records/<id>/` | PUT | 更新传输记录 | 公开 |
+| 中转站 | `/api/transfer/records/<id>/` | DELETE | 删除传输记录 | 公开 |
 
 ## 前端路由
 
@@ -113,6 +125,7 @@ web/
 | `/store` | StorePage | 商店列表 | 公开 |
 | `/store/:id` | ToolDetailPage | 工具详情 | 公开 |
 | `/store/upload` | ToolUploadPage | 工具上传 | 管理员 |
+| `/transfer` | TransferPage | 临时中转站 | 公开 |
 | `/login` | LoginPage | 登录 | 未登录 |
 
 ## 技术栈

@@ -3,16 +3,13 @@
     <section class="hero">
       <div class="container">
         <h1>Hub</h1>
-        <p>一站式工具应用商店平台</p>
-        <div class="hero-buttons">
-          <router-link to="/store" class="btn btn-primary">探索商店</router-link>
-        </div>
+        <p>多模块 Web 平台</p>
       </div>
     </section>
     
     <section class="features">
       <div class="container">
-        <div class="feature-card">
+        <router-link to="/store" class="feature-card">
           <div class="feature-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M4 7h16M4 17h16M10 12h4M4 12h2M18 12h2" />
@@ -20,7 +17,18 @@
           </div>
           <h3>工具商店</h3>
           <p>发现和下载各种实用工具，支持一键上传分享</p>
-        </div>
+        </router-link>
+
+        <router-link to="/transfer" class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 2v20M2 12h20" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </div>
+          <h3>临时中转站</h3>
+          <p>快速导航至空投/文叔叔，记录文件传输信息</p>
+        </router-link>
       </div>
     </section>
   </div>
@@ -48,33 +56,7 @@
 .hero p {
   font-size: 18px;
   color: #999999;
-  margin: 0 0 40px 0;
-}
-
-.hero-buttons {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-}
-
-.btn {
-  padding: 12px 36px;
-  border-radius: 4px;
-  font-size: 15px;
-  font-weight: 500;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background: #ffffff;
-  color: #1a1a1a;
-}
-
-.btn-primary:hover {
-  background: #e8e8e8;
+  margin: 0;
 }
 
 .features {

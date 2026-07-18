@@ -32,9 +32,9 @@ export const useAuthStore = defineStore('auth', () => {
 
   const handleLogin = async (data) => {
     const res = await login(data)
-    setTokens(res.data.access, res.data.refresh)
     username.value = res.data.username
     isStaff.value = res.data.is_staff || false
+    setTokens(res.data.access, res.data.refresh)
     return res.data
   }
 
