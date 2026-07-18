@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'home',
     'store',
-    'forum',
 ]
 
 MIDDLEWARE = [

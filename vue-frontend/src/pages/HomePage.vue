@@ -3,10 +3,9 @@
     <section class="hero">
       <div class="container">
         <h1>欢迎来到 Hub</h1>
-        <p>一站式工具应用商店与社区论坛平台</p>
+        <p>一站式工具应用商店平台</p>
         <div class="hero-buttons">
           <router-link to="/store" class="btn btn-primary">探索商店</router-link>
-          <router-link to="/forum" class="btn btn-secondary">进入论坛</router-link>
         </div>
       </div>
     </section>
@@ -21,17 +20,6 @@
           </div>
           <h3>工具商店</h3>
           <p>发现和下载各种实用工具，支持一键上传分享</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10" />
-              <line x1="12" y1="16" x2="12" y2="12" />
-              <line x1="12" y1="8" x2="12.01" y2="8" />
-            </svg>
-          </div>
-          <h3>社区论坛</h3>
-          <p>与志同道合的开发者交流，分享经验和想法</p>
         </div>
         <div class="feature-card">
           <div class="feature-icon">

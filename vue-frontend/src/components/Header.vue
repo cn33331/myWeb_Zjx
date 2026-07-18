@@ -7,7 +7,6 @@
         </router-link>
         <nav class="nav">
           <router-link to="/store" class="nav-link" :class="{ active: $route.name === 'Store' }">商店</router-link>
-          <router-link to="/forum" class="nav-link" :class="{ active: $route.name === 'Forum' }">论坛</router-link>
         </nav>
         <div class="auth">
           <template v-if="authStore.isAuthenticated">

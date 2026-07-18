@@ -24,22 +24,6 @@ const routes = [
     component: () => import('@/pages/ToolDetailPage.vue')
   },
   {
-    path: '/forum',
-    name: 'Forum',
-    component: () => import('@/pages/ForumPage.vue')
-  },
-  {
-    path: '/forum/new',
-    name: 'TopicCreate',
-    component: () => import('@/pages/TopicCreatePage.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/forum/:id',
-    name: 'TopicDetail',
-    component: () => import('@/pages/TopicDetailPage.vue')
-  },
-  {
     path: '/login',
     name: 'Login',
     component: () => import('@/pages/LoginPage.vue'),

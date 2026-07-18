@@ -1,14 +1,13 @@
 # Hub - 多功能 Web 平台
 
-基于 Django + Vue 3 的多功能 Web 平台，采用前后端分离架构，按功能拆分为多个独立模块。目前包含「应用商店」与「论坛」两个模块，后续可继续扩展。
+基于 Django + Vue 3 的工具应用商店平台，采用前后端分离架构。
 
 ## 平台模块
 
 | 模块 | 路径前缀 | 应用 | 说明 |
 | --- | --- | --- | --- |
-| 首页入口 | `/` | `home` | 展示各功能模块入口 |
+| 首页入口 | `/` | `home` | 展示平台入口 |
 | 应用商店 | `/store/` | `store` | 工具的上传、下载与详情查看 |
-| 论坛 | `/forum/` | `forum` | 注册、登录、发帖与回复讨论 |
 | 管理后台 | `/admin/` | Django Admin | 站点管理 |
 | API 接口 | `/api/` | DRF | RESTful API 服务 |
 
@@ -19,8 +18,8 @@
 │                        前端层                                    │
 │  Vue 3 + Vite + Pinia + Axios                                    │
 │  /vue-frontend/                                                  │
-│  ├── src/pages/       # 页面组件（Home/Store/Forum/Auth）         │
-│  ├── src/components/  # 通用组件（ToolCard/TopicCard/Header）     │
+│  ├── src/pages/       # 页面组件（Home/Store/Auth）               │
+│  ├── src/components/  # 通用组件（ToolCard/Header）               │
 │  ├── src/api/         # API请求封装                              │
 │  └── src/stores/      # Pinia状态管理                            │
 └───────────────────────────┬──────────────────────────────────────┘
@@ -32,8 +31,7 @@
 │  /hub/                                                           │
 │  ├── hub/settings.py  # CORS、REST Framework、JWT 配置           │
 │  ├── hub/auth_*.py    # 认证模块（登录/注册/Token刷新）          │
-│  ├── store/api/       # 商店模块 API                             │
-│  └── forum/api/       # 论坛模块 API                             │
+│  └── store/api/       # 商店模块 API                             │
 └───────────────────────────┬──────────────────────────────────────┘
                             │ Gunicorn / runserver
                             ▼
@@ -61,20 +59,16 @@ web/
 │   │   ├── auth_serializers.py
 │   │   └── auth_urls.py
 │   ├── home/                 # 首页入口应用
-│   ├── store/                # 应用商店模块
-│   │   ├── models.py
-│   │   ├── api/              # REST API（serializers/views/urls）
-│   │   └── templates/store/
-│   └── forum/                # 论坛模块
+│   └── store/                # 应用商店模块
 │       ├── models.py
 │       ├── api/              # REST API（serializers/views/urls）
-│       └── templates/forum/
+│       └── templates/store/
 ├── vue-frontend/             # Vue 3 前端项目
 │   ├── src/
-│   │   ├── api/              # axios 封装（index/store/forum/auth）
-│   │   ├── components/       # 通用组件（Header/ToolCard/TopicCard/Loading）
+│   │   ├── api/              # axios 封装（index/store/auth）
+│   │   ├── components/       # 通用组件（Header/ToolCard/Loading）
 │   │   ├── pages/            # 页面组件
-│   │   ├── stores/           # Pinia 状态管理（auth/store/forum）
+│   │   ├── stores/           # Pinia 状态管理（auth/store）
 │   │   ├── router/           # 路由配置与导航守卫
 │   │   ├── App.vue
 │   │   └── main.js
@@ -99,11 +93,6 @@ web/
 - 工具下载（带下载次数统计）
 - 工具详情查看
 
-### 论坛（forum）
-- 用户注册与管理员审核
-- 登录 / 登出
-- 发布话题与回复讨论
-
 ## API 接口总览
 
 | 模块 | API 路径 | 方法 | 说明 | 认证 |
@@ -116,11 +105,6 @@ web/
 | 商店 | `/api/store/tools/<id>/` | GET | 工具详情 | 公开 |
 | 商店 | `/api/store/tools/<id>/` | DELETE | 删除工具 | 管理员 |
 | 商店 | `/api/store/tools/<id>/download/` | GET | 工具下载 | 公开 |
-| 论坛 | `/api/forum/topics/` | GET | 话题列表 | 公开 |
-| 论坛 | `/api/forum/topics/` | POST | 发布话题 | 登录用户 |
-| 论坛 | `/api/forum/topics/<id>/` | GET | 话题详情（浏览+1） | 公开 |
-| 论坛 | `/api/forum/topics/<id>/posts/` | GET | 回复列表 | 公开 |
-| 论坛 | `/api/forum/topics/<id>/posts/` | POST | 发布回复 | 登录用户 |
 
 ## 前端路由
 
@@ -130,9 +114,6 @@ web/
 | `/store` | StorePage | 商店列表 | 公开 |
 | `/store/:id` | ToolDetailPage | 工具详情 | 公开 |
 | `/store/upload` | ToolUploadPage | 工具上传 | 管理员 |
-| `/forum` | ForumPage | 论坛首页 | 公开 |
-| `/forum/:id` | TopicDetailPage | 话题详情 | 公开 |
-| `/forum/new` | TopicCreatePage | 发布话题 | 登录用户 |
 | `/login` | LoginPage | 登录 | 未登录 |
 | `/register` | RegisterPage | 注册 | 未登录 |
 
