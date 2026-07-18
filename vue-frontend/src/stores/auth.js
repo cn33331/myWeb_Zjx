@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { login, register } from '@/api/auth'
+import { login } from '@/api/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref(localStorage.getItem('access_token') || '')
@@ -38,12 +38,7 @@ export const useAuthStore = defineStore('auth', () => {
     return res.data
   }
 
-  const handleRegister = async (data) => {
-    const res = await register(data)
-    setTokens(res.data.access, res.data.refresh)
-    username.value = res.data.username
-    return res.data
-  }
+
 
   const initFromStorage = () => {
     const storedToken = localStorage.getItem('access_token')
@@ -64,7 +59,6 @@ export const useAuthStore = defineStore('auth', () => {
     setTokens,
     clearTokens,
     handleLogin,
-    handleRegister,
     initFromStorage
   }
 })

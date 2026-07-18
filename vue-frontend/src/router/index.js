@@ -28,12 +28,6 @@ const routes = [
     name: 'Login',
     component: () => import('@/pages/LoginPage.vue'),
     meta: { requiresGuest: true }
-  },
-  {
-    path: '/register',
-    name: 'Register',
-    component: () => import('@/pages/RegisterPage.vue'),
-    meta: { requiresGuest: true }
   }
 ]
 

@@ -15,8 +15,7 @@
             <button @click="logout" class="btn btn-danger">退出</button>
           </template>
           <template v-else>
-            <router-link to="/login" class="btn btn-secondary">登录</router-link>
-            <router-link to="/register" class="btn btn-primary">注册</router-link>
+            <router-link to="/login" class="btn btn-primary">登录</router-link>
           </template>
         </div>
       </div>

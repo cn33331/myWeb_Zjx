@@ -16,11 +16,5 @@ def index(request):
             'desc': '浏览、上传与下载工具应用',
             'url': reverse('tool_list'),
         },
-        {
-            'code': 'FORUM',
-            'name': '论坛',
-            'desc': '发帖讨论与分享交流',
-            'url': reverse('forum_home'),
-        },
     ]
     return render(request, 'home/index.html', {'modules': modules})

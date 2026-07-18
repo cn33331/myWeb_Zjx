@@ -19,11 +19,6 @@
           <button type="submit" class="btn btn-primary" :disabled="loading">
             {{ loading ? '登录中...' : '登录' }}
           </button>
-          
-          <div class="register-link">
-            <span>还没有账号？</span>
-            <router-link to="/register">立即注册</router-link>
-          </div>
         </form>
       </div>
     </div>
@@ -149,21 +144,5 @@ const handleLogin = async () => {
   cursor: not-allowed;
 }
 
-.register-link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 14px;
-  color: #6b7280;
-}
 
-.register-link a {
-  color: #3b82f6;
-  text-decoration: none;
-}
-
-.register-link a:hover {
-  text-decoration: underline;
-}
 </style>

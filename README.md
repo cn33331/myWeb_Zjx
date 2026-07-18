@@ -98,7 +98,6 @@ web/
 | 模块 | API 路径 | 方法 | 说明 | 认证 |
 |------|---------|------|------|------|
 | 认证 | `/api/auth/login/` | POST | 用户登录 | 公开 |
-| 认证 | `/api/auth/register/` | POST | 用户注册 | 公开 |
 | 认证 | `/api/auth/refresh/` | POST | Token 刷新 | 需 refresh_token |
 | 商店 | `/api/store/tools/` | GET | 工具列表 | 公开 |
 | 商店 | `/api/store/tools/` | POST | 上传工具 | 管理员 |
@@ -115,7 +114,6 @@ web/
 | `/store/:id` | ToolDetailPage | 工具详情 | 公开 |
 | `/store/upload` | ToolUploadPage | 工具上传 | 管理员 |
 | `/login` | LoginPage | 登录 | 未登录 |
-| `/register` | RegisterPage | 注册 | 未登录 |
 
 ## 技术栈
 
