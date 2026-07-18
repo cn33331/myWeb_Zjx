@@ -216,7 +216,7 @@ $ADMIN_ACCESS_RULES
     error_log /www/wwwlogs/${PROJECT_NAME}_error.log;
 }"
 
-    NGINX_VHOST_CONF="/www/server/panel/vhost/nginx/${SERVER_IP}.conf"
+    NGINX_VHOST_CONF="/www/server/panel/vhost/nginx/${PROJECT_NAME}.conf"
     
     if [ -f "$NGINX_VHOST_CONF" ]; then
         log_info "备份原有配置: ${NGINX_VHOST_CONF}.bak"
@@ -244,7 +244,7 @@ show_deploy_info() {
     echo
     echo "项目路径: $SCRIPT_DIR"
     echo "虚拟环境: $VENV_DIR"
-    echo "Nginx 配置: /www/server/panel/vhost/nginx/${SERVER_IP}.conf"
+    echo "Nginx 配置: /www/server/panel/vhost/nginx/${PROJECT_NAME}.conf"
     echo
     echo "配置 Supervisor 守护进程（宝塔面板）："
     echo "1. 登录宝塔面板：http://服务器IP:8888"
