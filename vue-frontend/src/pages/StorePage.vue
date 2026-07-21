@@ -2,7 +2,7 @@
   <div class="store-page">
     <div class="container">
       <div class="page-header">
-        <h1>工具商店</h1>
+        <h1>工具仓库</h1>
         <div class="search-bar">
           <input type="text" v-model="searchQuery" placeholder="搜索工具..." class="search-input" />
         </div>

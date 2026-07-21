@@ -1,13 +1,13 @@
 # Hub - 多功能 Web 平台
 
-基于 Django + Vue 3 的web平台，采用前后端分离架构。平台包含应用商店、中转站、管理后台等功能。
+基于 Django + Vue 3 的web平台，采用前后端分离架构。平台包含应用仓库、中转站、管理后台等功能。
 
 ## 平台模块
 
 | 模块 | 路径前缀 | 应用 | 说明 |
 | --- | --- | --- | --- |
 | 首页入口 | `/` | `home` | 展示平台入口 |
-| 应用商店 | `/store/` | `store` | 工具的上传、下载与详情查看 |
+| 应用仓库 | `/store/` | `store` | 工具的上传、下载与详情查看 |
 | 中转站 | `/transfer/` | `transfer` | 文件传输导航与记录管理 |
 | 管理后台 | `/admin/` | Django Admin | 站点管理 |
 | API 接口 | `/api/` | DRF | RESTful API 服务 |
@@ -32,7 +32,7 @@
 │  /hub/                                                           │
 │  ├── hub/settings.py  # CORS、REST Framework、JWT 配置           │
 │  ├── hub/auth_*.py    # 认证模块（登录/注册/Token刷新）          │
-│  └── store/api/       # 商店模块 API                             │
+│  └── store/api/       # 仓库模块 API                             │
 └───────────────────────────┬──────────────────────────────────────┘
                             │ Gunicorn / runserver
                             ▼
@@ -60,7 +60,7 @@ web/
 │   │   ├── auth_serializers.py
 │   │   └── auth_urls.py
 │   ├── home/                 # 首页入口应用
-  │   ├── store/                # 应用商店模块
+  │   ├── store/                # 应用仓库模块
   │   └── transfer/             # 中转站模块（传输记录管理）
 │       ├── models.py
 │       ├── api/              # REST API（serializers/views/urls）
@@ -77,7 +77,6 @@ web/
 │   ├── .env.development      # 开发环境 API 地址
 │   ├── .env.production       # 生产环境 API 地址
 │   └── vite.config.js        # Vite 配置（代理、别名）
-├── nginx_bt_80.conf          # 宝塔 Nginx 配置（80端口）
 ├── requirements.txt          # Python 依赖
 ├── start.sh                  # 启动脚本（支持开发/生产模式）
 ├── deploy_bt.sh              # 宝塔面板部署脚本
@@ -89,7 +88,7 @@ web/
 ### 首页（home）
 - 根路径 `/` 展示平台各功能模块入口卡片
 
-### 应用商店（store）
+### 应用仓库（store）
 - 工具列表展示与搜索
 - 工具上传管理（管理员）
 - 工具下载（带下载次数统计）
@@ -106,11 +105,11 @@ web/
 |------|---------|------|------|------|
 | 认证 | `/api/auth/login/` | POST | 用户登录 | 公开 |
 | 认证 | `/api/auth/refresh/` | POST | Token 刷新 | 需 refresh_token |
-| 商店 | `/api/store/tools/` | GET | 工具列表 | 公开 |
-| 商店 | `/api/store/tools/` | POST | 上传工具 | 管理员 |
-| 商店 | `/api/store/tools/<id>/` | GET | 工具详情 | 公开 |
-| 商店 | `/api/store/tools/<id>/` | DELETE | 删除工具 | 管理员 |
-| 商店 | `/api/store/tools/<id>/download/` | GET | 工具下载 | 公开 |
+| 仓库 | `/api/store/tools/` | GET | 工具列表 | 公开 |
+| 仓库 | `/api/store/tools/` | POST | 上传工具 | 管理员 |
+| 仓库 | `/api/store/tools/<id>/` | GET | 工具详情 | 公开 |
+| 仓库 | `/api/store/tools/<id>/` | DELETE | 删除工具 | 管理员 |
+| 仓库 | `/api/store/tools/<id>/download/` | GET | 工具下载 | 公开 |
 | 中转站 | `/api/transfer/records/` | GET | 传输记录列表 | 公开 |
 | 中转站 | `/api/transfer/records/` | POST | 添加传输记录 | 公开 |
 | 中转站 | `/api/transfer/records/<id>/` | GET | 传输记录详情 | 公开 |
@@ -122,7 +121,7 @@ web/
 | 路径 | 组件 | 说明 | 权限 |
 |------|------|------|------|
 | `/` | HomePage | 首页入口 | 公开 |
-| `/store` | StorePage | 商店列表 | 公开 |
+| `/store` | StorePage | 仓库列表 | 公开 |
 | `/store/:id` | ToolDetailPage | 工具详情 | 公开 |
 | `/store/upload` | ToolUploadPage | 工具上传 | 管理员 |
 | `/transfer` | TransferPage | 临时中转站 | 公开 |

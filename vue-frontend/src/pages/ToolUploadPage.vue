@@ -1,7 +1,7 @@
 <template>
   <div class="upload-page">
     <div class="container">
-      <button @click="$router.back()" class="back-btn">返回商店</button>
+      <button @click="$router.back()" class="back-btn">返回仓库</button>
       
       <div class="upload-form">
         <h1>上传工具</h1>

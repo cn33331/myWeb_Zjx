@@ -12,7 +12,7 @@ def index(request):
     modules = [
         {
             'code': 'STORE',
-            'name': '应用商店',
+            'name': '应用仓库',
             'desc': '浏览、上传与下载工具应用',
             'url': reverse('tool_list'),
         },
