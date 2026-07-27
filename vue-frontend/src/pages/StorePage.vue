@@ -3,8 +3,17 @@
     <div class="container">
       <div class="page-header">
         <h1>工具仓库</h1>
-        <div class="search-bar">
-          <input type="text" v-model="searchQuery" placeholder="搜索工具..." class="search-input" />
+        <div class="header-actions">
+          <button
+            v-if="authStore.isAuthenticated && authStore.isStaff"
+            @click="$router.push('/store/upload')"
+            class="btn btn-primary"
+          >
+            + 上传工具
+          </button>
+          <div class="search-bar">
+            <input type="text" v-model="searchQuery" placeholder="搜索工具..." class="search-input" />
+          </div>
         </div>
       </div>
       
@@ -31,10 +40,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useStoreStore } from '@/stores/store'
+import { useAuthStore } from '@/stores/auth'
 import ToolCard from '@/components/ToolCard.vue'
 import Loading from '@/components/Loading.vue'
 
 const storeStore = useStoreStore()
+const authStore = useAuthStore()
 const searchQuery = ref('')
 
 const filteredTools = computed(() => {
@@ -69,6 +80,31 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 32px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: #333333;
 }
 
 .page-header h1 {

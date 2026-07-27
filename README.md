@@ -8,6 +8,7 @@
 | --- | --- | --- | --- |
 | 首页入口 | `/` | `home` | 展示平台入口 |
 | 应用仓库 | `/store/` | `store` | 工具的上传、下载与详情查看 |
+| 笔记管理 | `/notes/` | `notes` | 从 Gitee 拉取 Obsidian 笔记并展示 |
 | 中转站 | `/transfer/` | `transfer` | 文件传输导航与记录管理 |
 | 管理后台 | `/admin/` | Django Admin | 站点管理 |
 | API 接口 | `/api/` | DRF | RESTful API 服务 |
@@ -32,7 +33,8 @@
 │  /hub/                                                           │
 │  ├── hub/settings.py  # CORS、REST Framework、JWT 配置           │
 │  ├── hub/auth_*.py    # 认证模块（登录/注册/Token刷新）          │
-│  └── store/api/       # 仓库模块 API                             │
+│  ├── store/api/       # 仓库模块 API                             │
+│  └── notes/           # 笔记模块（Git同步、Markdown展示）        │
 └───────────────────────────┬──────────────────────────────────────┘
                             │ Gunicorn / runserver
                             ▼
@@ -61,6 +63,7 @@ web/
 │   │   └── auth_urls.py
 │   ├── home/                 # 首页入口应用
   │   ├── store/                # 应用仓库模块
+  │   ├── notes/                # 笔记管理模块（Git同步、Markdown展示）
   │   └── transfer/             # 中转站模块（传输记录管理）
 │       ├── models.py
 │       ├── api/              # REST API（serializers/views/urls）
@@ -94,6 +97,12 @@ web/
 - 工具下载（带下载次数统计）
 - 工具详情查看
 
+### 笔记管理（notes）
+- 从 Gitee 私有仓库拉取 Obsidian 笔记到本地指定目录（如 `/tmp/my-notes`）
+- 笔记仓库管理（添加、同步、删除）
+- 笔记列表展示与搜索
+- Markdown 内容预览（标题、列表、代码块等格式）
+
 ### 临时中转站（transfer）
 - 快速导航至 AirPortal 空投和文叔叔文件传输网站
 - 记录文件传输信息（取件码、取件链接、文件名、文件大小）
@@ -115,6 +124,11 @@ web/
 | 中转站 | `/api/transfer/records/<id>/` | GET | 传输记录详情 | 公开 |
 | 中转站 | `/api/transfer/records/<id>/` | PUT | 更新传输记录 | 公开 |
 | 中转站 | `/api/transfer/records/<id>/` | DELETE | 删除传输记录 | 公开 |
+| 笔记 | `/api/notes/repositories/` | GET | 获取仓库列表 | 公开 |
+| 笔记 | `/api/notes/repositories/` | POST | 添加笔记仓库 | 公开 |
+| 笔记 | `/api/notes/repositories/<id>/sync/` | POST | 同步笔记仓库 | 公开 |
+| 笔记 | `/api/notes/repositories/<id>/notes/` | GET | 获取笔记列表（返回全部，不分页） | 公开 |
+| 笔记 | `/api/notes/repositories/<id>/notes/<path>/` | GET | 获取笔记内容 | 公开 |
 
 ## 前端路由
 
@@ -124,6 +138,7 @@ web/
 | `/store` | StorePage | 仓库列表 | 公开 |
 | `/store/:id` | ToolDetailPage | 工具详情 | 公开 |
 | `/store/upload` | ToolUploadPage | 工具上传 | 管理员 |
+| `/notes` | NotesPage | 笔记管理 | 公开 |
 | `/transfer` | TransferPage | 临时中转站 | 公开 |
 | `/login` | LoginPage | 登录 | 未登录 |
 

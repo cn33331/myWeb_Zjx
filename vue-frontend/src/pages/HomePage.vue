@@ -29,6 +29,20 @@
           <h3>临时中转站</h3>
           <p>快速导航至空投/文叔叔，记录文件传输信息</p>
         </router-link>
+
+        <router-link to="/notes" class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="16" y1="13" x2="8" y2="13" />
+              <line x1="16" y1="17" x2="8" y2="17" />
+              <polyline points="10 9 9 9 8 9" />
+            </svg>
+          </div>
+          <h3>笔记管理</h3>
+          <p>同步Gitee仓库笔记，支持Markdown预览和搜索</p>
+        </router-link>
       </div>
     </section>
   </div>
@@ -71,9 +85,9 @@
 
 .features .container {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 24px;
-  max-width: 600px;
+  max-width: 1200px;
 }
 
 .feature-card {

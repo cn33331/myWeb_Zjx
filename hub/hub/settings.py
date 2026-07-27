@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'home',
     'store',
     'transfer',
+    'notes',
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,1230 @@
+<template>
+  <div class="notes-page">
+    <div v-if="!selectedRepo" class="repo-select-page">
+      <div class="container">
+        <h1>笔记管理</h1>
+        <p class="subtitle">本地仓库可上传/删除，远程仓库仅支持同步和查看</p>
+        
+        <div class="repo-section">
+          <h2 class="section-title">📁 本地仓库</h2>
+          <div class="repo-grid">
+            <div 
+              v-for="repo in localRepos" 
+              :key="repo.id" 
+              class="repo-card local"
+              @click="selectRepository(repo)"
+            >
+              <div class="repo-icon">📝</div>
+              <div class="repo-info">
+                <h3>{{ repo.name }}</h3>
+                <p class="repo-type-badge local-badge">本地仓库</p>
+                <p class="repo-path">路径: {{ repo.local_path }}</p>
+                <p class="repo-status" :class="repo.sync_status">
+                  {{ repo.sync_status === 'synced' ? '✓ 已就绪' : '○ 待初始化' }}
+                </p>
+              </div>
+              <div class="repo-actions">
+                <button @click.stop="uploadNote(repo.id)" class="action-btn upload" :disabled="!isLoggedIn">
+                  {{ isLoggedIn ? '上传' : '登录' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="repo-section" v-if="remoteRepos.length > 0">
+          <h2 class="section-title">☁️ 远程仓库</h2>
+          <div class="repo-grid">
+            <div 
+              v-for="repo in remoteRepos" 
+              :key="repo.id" 
+              class="repo-card remote"
+              @click="selectRepository(repo)"
+            >
+              <div class="repo-icon">🔗</div>
+              <div class="repo-info">
+                <h3>{{ repo.name }}</h3>
+                <p class="repo-type-badge remote-badge">远程仓库</p>
+                <p class="repo-url">{{ repo.repo_url }}</p>
+                <p class="repo-status" :class="repo.sync_status">
+                  {{ repo.sync_status === 'synced' ? '✓ 已同步' : repo.sync_status === 'failed' ? '✗ 同步失败' : '○ 未同步' }}
+                </p>
+                <p v-if="repo.last_sync" class="repo-time">最后同步: {{ formatTime(repo.last_sync) }}</p>
+              </div>
+              <button @click.stop="syncRepo(repo.id)" class="sync-btn">同步</button>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="remoteRepos.length === 0" class="add-remote-section">
+          <button @click="showAddModal = true" class="btn">+ 添加远程仓库</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-else class="vscode-layout">
+      <div class="activity-bar">
+        <div class="activity-icon active" @click="leftPanelOpen = !leftPanelOpen" title="文件树">📄</div>
+        <div v-if="selectedRepo.repo_type === 'remote'" class="activity-icon" @click="syncRepo(selectedRepo.id)" title="同步">🔄</div>
+        <div v-if="selectedRepo.repo_type === 'local'" class="activity-icon" @click="uploadNote(selectedRepo.id)" title="上传">📤</div>
+        <div class="activity-icon" @click="selectedRepo = null" title="返回">⬅️</div>
+      </div>
+
+      <transition name="panel">
+        <div v-if="leftPanelOpen" class="sidebar-left">
+          <div class="sidebar-header">
+            <div class="header-info">
+              <span class="header-title">{{ selectedRepo.name }}</span>
+              <span class="repo-tag" :class="selectedRepo.repo_type">{{ selectedRepo.repo_type === 'local' ? '本地' : '远程' }}</span>
+            </div>
+            <span class="close-btn" @click="leftPanelOpen = false">×</span>
+          </div>
+          
+          <div class="search-box">
+            <input 
+              v-model="searchQuery" 
+              placeholder="搜索..." 
+              @input="handleSearch"
+            />
+          </div>
+
+          <div v-if="selectedRepo.repo_type === 'local' && isLoggedIn" class="toolbar">
+            <button @click="uploadNote(selectedRepo.id)" class="toolbar-btn">📤 上传文件</button>
+          </div>
+          
+          <div class="file-tree">
+            <div 
+              v-for="item in fileTree" 
+              :key="item.name" 
+            >
+              <template v-if="item.is_file">
+                <div 
+                  class="tree-item-file"
+                  :class="{ selected: currentNote?.file_path === item.file_path }"
+                  @click="openNote(item)"
+                >
+                  <span class="file-icon">📄</span>
+                  <span class="file-name">{{ item.name }}</span>
+                  <span 
+                    v-if="selectedRepo.repo_type === 'local' && isLoggedIn" 
+                    class="delete-icon"
+                    @click.stop="deleteNote(item)"
+                    title="删除"
+                  >×</span>
+                </div>
+              </template>
+              <template v-else>
+                <div class="tree-item-dir">
+                  <span class="dir-icon" @click="toggleExpand(item)">
+                    {{ isExpanded(item) ? '▼' : '▶' }}
+                  </span>
+                  <span class="dir-icon-folder">{{ isExpanded(item) ? '📂' : '📁' }}</span>
+                  <span class="dir-name">{{ item.name }}</span>
+                </div>
+                <template v-if="isExpanded(item)">
+                  <div class="tree-children">
+                    <template v-for="child in item.children" :key="child.name">
+                      <template v-if="child.is_file">
+                        <div 
+                          class="tree-item-file"
+                          :class="{ selected: currentNote?.file_path === child.file_path }"
+                          @click="openNote(child)"
+                        >
+                          <span class="file-icon">📄</span>
+                          <span class="file-name">{{ child.name }}</span>
+                          <span 
+                            v-if="selectedRepo.repo_type === 'local' && isLoggedIn" 
+                            class="delete-icon"
+                            @click.stop="deleteNote(child)"
+                            title="删除"
+                          >×</span>
+                        </div>
+                      </template>
+                      <template v-else>
+                        <div class="tree-item-dir">
+                          <span class="dir-icon" @click="toggleExpand(child)">
+                            {{ isExpanded(child) ? '▼' : '▶' }}
+                          </span>
+                          <span class="dir-icon-folder">{{ isExpanded(child) ? '📂' : '📁' }}</span>
+                          <span class="dir-name">{{ child.name }}</span>
+                        </div>
+                        <template v-if="isExpanded(child)">
+                          <div class="tree-children">
+                            <div 
+                              v-for="sub in child.children" 
+                              :key="sub.name"
+                              class="tree-item-file"
+                              :class="{ selected: currentNote?.file_path === sub.file_path }"
+                              @click="openNote(sub)"
+                            >
+                              <span class="file-icon">📄</span>
+                              <span class="file-name">{{ sub.name }}</span>
+                              <span 
+                                v-if="selectedRepo.repo_type === 'local' && isLoggedIn" 
+                                class="delete-icon"
+                                @click.stop="deleteNote(sub)"
+                                title="删除"
+                              >×</span>
+                            </div>
+                          </div>
+                        </template>
+                      </template>
+                    </template>
+                  </div>
+                </template>
+              </template>
+            </div>
+          </div>
+        </div>
+      </transition>
+
+      <div class="content-area">
+        <div v-if="!currentNote" class="empty-content">
+          <div class="empty-icon">📝</div>
+          <p>选择一个笔记开始阅读</p>
+        </div>
+        <div v-else class="note-view">
+          <div class="note-header">
+            <h1>{{ currentNote.file_name }}</h1>
+            <div class="note-meta">
+              <span>{{ formatTime(currentNote.last_modified) }}</span>
+              <span>{{ formatSize(currentNote.size) }}</span>
+              <span v-if="selectedRepo.repo_type === 'local' && isLoggedIn" 
+                    class="delete-link" 
+                    @click="deleteNote(currentNote)">
+                🗑️ 删除
+              </span>
+            </div>
+          </div>
+          <div class="note-content" v-html="renderedContent"></div>
+        </div>
+      </div>
+
+      <transition name="panel-right">
+        <div v-if="rightPanelOpen" class="sidebar-right">
+          <div class="toc-header">
+            <span>目录</span>
+            <span class="close-btn" @click="rightPanelOpen = false">×</span>
+          </div>
+          <div v-if="noteToc.length === 0" class="empty-toc">
+            <p>暂无目录</p>
+          </div>
+          <div v-else class="toc-list">
+            <div 
+              v-for="(item, index) in noteToc" 
+              :key="index"
+              class="toc-item"
+              :class="'level-' + item.level"
+              @click="scrollToHeading(item.slug)"
+            >
+              {{ item.title }}
+            </div>
+          </div>
+        </div>
+      </transition>
+
+      <div class="right-toggle" @click="rightPanelOpen = !rightPanelOpen" :title="rightPanelOpen ? '收起目录' : '展开目录'">
+        {{ rightPanelOpen ? '›' : '‹' }}
+      </div>
+    </div>
+
+    <div v-if="showAddModal" class="modal" @click.self="showAddModal = false">
+      <div class="modal-content">
+        <h3>添加远程仓库</h3>
+        <input v-model="repoUrl" placeholder="仓库地址 (如: git@gitee.com:zeng333/note.git)" />
+        <input v-model="localPath" placeholder="本地路径 (如: /tmp/my-notes)" />
+        <div class="modal-actions">
+          <button @click="addRepo" class="btn primary">保存</button>
+          <button @click="showAddModal = false" class="btn">取消</button>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="showUploadModal" class="modal" @click.self="showUploadModal = false">
+      <div class="modal-content">
+        <h3>上传笔记文件</h3>
+        <div class="upload-area" @click="$refs.fileInput.click()" @dragover.prevent @drop.prevent="handleDrop">
+          <input ref="fileInput" type="file" accept=".md,.markdown,.txt" @change="handleFileSelect" style="display:none" />
+          <div v-if="!uploadFile" class="upload-placeholder">
+            <p>📄</p>
+            <p>点击选择文件或拖拽到此处</p>
+            <p class="hint">支持 .md, .markdown, .txt 格式</p>
+          </div>
+          <div v-else class="upload-preview">
+            <p>📄 {{ uploadFile.name }}</p>
+            <p class="hint">{{ formatSize(uploadFile.size) }}</p>
+          </div>
+        </div>
+        <input v-model="uploadPath" placeholder="保存路径 (可选，如: work-note/)" class="path-input" />
+        <div class="modal-actions">
+          <button @click="doUpload" class="btn primary" :disabled="!uploadFile">上传</button>
+          <button @click="showUploadModal = false" class="btn">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
+import axios from 'axios';
+import { useAuthStore } from '@/stores/auth';
+
+const authStore = useAuthStore();
+
+const repos = ref([]);
+const selectedRepo = ref(null);
+const currentNote = ref(null);
+const noteContent = ref('');
+const noteToc = ref([]);
+const fileTree = ref([]);
+const searchQuery = ref('');
+const showAddModal = ref(false);
+const showUploadModal = ref(false);
+const repoUrl = ref('');
+const localPath = ref('');
+const uploadFile = ref(null);
+const uploadPath = ref('');
+const uploadingRepoId = ref(null);
+const expandedDirs = ref(new Set());
+const leftPanelOpen = ref(true);
+const rightPanelOpen = ref(true);
+
+const isLoggedIn = computed(() => authStore.isAuthenticated);
+
+const localRepos = computed(() => repos.value.filter(r => r.repo_type === 'local'));
+const remoteRepos = computed(() => repos.value.filter(r => r.repo_type === 'remote'));
+
+watch(() => authStore.accessToken, (newToken) => {
+  if (newToken) {
+    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+  } else {
+    delete axios.defaults.headers.common['Authorization'];
+  }
+}, { immediate: true });
+
+const handleStorageChange = (e) => {
+  if (e.key === 'access_token') {
+    authStore.initFromStorage();
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('storage', handleStorageChange);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('storage', handleStorageChange);
+});
+
+const loadRepos = async () => {
+  try {
+    const res = await axios.get('/api/notes/repositories/');
+    repos.value = res.data.results || res.data;
+  } catch (e) {
+    console.error('加载仓库失败:', e);
+  }
+};
+
+const selectRepository = async (repo) => {
+  selectedRepo.value = repo;
+  expandedDirs.value = new Set();
+  await loadFileTree(repo.id);
+};
+
+const loadFileTree = async (repoId) => {
+  try {
+    const res = await axios.get(`/api/notes/repositories/${repoId}/file-tree/`);
+    fileTree.value = res.data;
+    expandedDirs.value = new Set(fileTree.value.map(d => d.name));
+  } catch (e) {
+    console.error('加载文件树失败:', e);
+  }
+};
+
+const isExpanded = (item) => {
+  return expandedDirs.value.has(item.name);
+};
+
+const toggleExpand = (item) => {
+  const newSet = new Set(expandedDirs.value);
+  if (newSet.has(item.name)) {
+    newSet.delete(item.name);
+  } else {
+    newSet.add(item.name);
+  }
+  expandedDirs.value = newSet;
+};
+
+const syncRepo = async (id) => {
+  try {
+    await axios.post(`/api/notes/repositories/${id}/sync/`);
+    await loadRepos();
+    if (selectedRepo.value?.id === id) {
+      await loadFileTree(id);
+    }
+  } catch (e) {
+    console.error('同步失败:', e);
+  }
+};
+
+const addRepo = async () => {
+  if (!repoUrl.value || !localPath.value) {
+    alert('请填写完整信息');
+    return;
+  }
+  try {
+    await axios.post('/api/notes/repositories/', {
+      name: repoUrl.value.split('/').pop().replace('.git', ''),
+      repo_type: 'remote',
+      repo_url: repoUrl.value,
+      local_path: localPath.value
+    });
+    showAddModal.value = false;
+    repoUrl.value = '';
+    localPath.value = '';
+    await loadRepos();
+  } catch (e) {
+    console.error('添加失败:', e);
+    alert('添加失败，请检查仓库地址是否正确');
+  }
+};
+
+const openNote = async (note) => {
+  if (!selectedRepo.value) return;
+  currentNote.value = note;
+  try {
+    const res = await axios.get(`/api/notes/repositories/${selectedRepo.value.id}/note/${encodeURIComponent(note.file_path)}/`);
+    noteContent.value = res.data.content || '';
+    noteToc.value = res.data.toc || [];
+  } catch (error) {
+    console.error('加载笔记内容失败:', error);
+    noteContent.value = '加载失败';
+    noteToc.value = [];
+  }
+};
+
+const uploadNote = (repoId) => {
+  if (!isLoggedIn.value) {
+    alert('请先登录后再上传文件');
+    window.location.href = '/login';
+    return;
+  }
+  uploadingRepoId.value = repoId;
+  uploadFile.value = null;
+  uploadPath.value = '';
+  showUploadModal.value = true;
+};
+
+const handleFileSelect = (event) => {
+  uploadFile.value = event.target.files[0];
+};
+
+const handleDrop = (event) => {
+  const files = event.dataTransfer.files;
+  if (files.length > 0) {
+    uploadFile.value = files[0];
+  }
+};
+
+const doUpload = async () => {
+  if (!uploadFile.value) return;
+  
+  const formData = new FormData();
+  formData.append('file', uploadFile.value);
+  if (uploadPath.value) {
+    const filePath = uploadPath.value.endsWith('/') 
+      ? uploadPath.value + uploadFile.value.name 
+      : uploadPath.value;
+    formData.append('file_path', filePath);
+  }
+  
+  try {
+    const repoId = uploadingRepoId.value || selectedRepo.value?.id;
+    const res = await axios.post(`/api/notes/repositories/${repoId}/upload/`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    
+    if (res.data.success) {
+      alert('上传成功！');
+      showUploadModal.value = false;
+      uploadingRepoId.value = null;
+      if (selectedRepo.value) {
+        await loadFileTree(selectedRepo.value.id);
+      }
+    }
+  } catch (e) {
+    if (e.response?.status === 401) {
+      alert('登录已过期，请重新登录！');
+      authStore.clearTokens();
+      window.location.href = '/login';
+    } else {
+      console.error('上传失败:', e);
+      alert('上传失败: ' + (e.response?.data?.error || e.message));
+    }
+  }
+};
+
+const deleteNote = async (note) => {
+  if (!isLoggedIn.value) {
+    alert('请先登录后再删除文件');
+    window.location.href = '/login';
+    return;
+  }
+  
+  if (!confirm(`确定要删除「${note.file_name}」吗？`)) return;
+  
+  try {
+    await axios.post(`/api/notes/repositories/${selectedRepo.value.id}/delete/`, {
+      file_path: note.file_path
+    });
+    
+    if (currentNote.value?.file_path === note.file_path) {
+      currentNote.value = null;
+      noteContent.value = '';
+      noteToc.value = [];
+    }
+    
+    await loadFileTree(selectedRepo.value.id);
+    alert('删除成功！');
+  } catch (e) {
+    if (e.response?.status === 401) {
+      alert('登录已过期，请重新登录！');
+      authStore.clearTokens();
+      window.location.href = '/login';
+    } else {
+      console.error('删除失败:', e);
+      alert('删除失败: ' + (e.response?.data?.error || e.message));
+    }
+  }
+};
+
+const handleSearch = () => {
+  if (selectedRepo.value) {
+    loadFileTree(selectedRepo.value.id);
+  }
+};
+
+const renderedContent = computed(() => {
+  if (!noteContent.value) return '';
+  let html = noteContent.value
+    .replace(/^### (.*$)/gim, '<h3 id="heading-$1">$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2 id="heading-$1">$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1 id="heading-$1">$1</h1>')
+    .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+    .replace(/\*(.*)\*/gim, '<em>$1</em>')
+    .replace(/^- (.*$)/gim, '<li>$1</li>')
+    .replace(/^\d+\. (.*$)/gim, '<li>$1</li>')
+    .replace(/```(\w+)?\n([\s\S]*?)```/gim, '<pre><code>$2</code></pre>')
+    .replace(/`([^`]+)`/gim, '<code>$1</code>')
+    .replace(/\n/gim, '<br/>');
+  html = html.replace(/(<li>.*<\/li>)/gim, '<ul>$1</ul>').replace(/<\/ul><ul>/gim, '');
+  html = html.replace(/id="heading-(.*?)"/gim, (match, title) => {
+    const slug = title.toLowerCase().replace(/[^a-zA-Z0-9\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '');
+    return `id="${slug || 'heading-' + Math.random().toString(36).substr(2, 9)}"`;
+  });
+  return html;
+});
+
+const scrollToHeading = (slug) => {
+  const element = document.getElementById(slug);
+  if (element) {
+    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    element.classList.add('highlighted');
+    setTimeout(() => element.classList.remove('highlighted'), 1000);
+  }
+};
+
+const formatTime = (timeStr) => {
+  if (!timeStr) return '';
+  const date = new Date(timeStr);
+  return date.toLocaleString('zh-CN');
+};
+
+const formatSize = (bytes) => {
+  if (!bytes || bytes < 0) return '0 B';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+};
+
+onMounted(() => {
+  authStore.initFromStorage();
+  loadRepos();
+});
+</script>
+
+<style scoped>
+.notes-page { height: 100vh; display: flex; background: #1e1e1e; color: #cccccc; }
+
+.repo-select-page { flex: 1; padding: 20px; overflow-y: auto; background: #1e1e1e; }
+.container { max-width: 1200px; margin: 0 auto; }
+
+.subtitle { color: #858585; margin-bottom: 24px; }
+
+.repo-section { margin-bottom: 32px; }
+.section-title { 
+  font-size: 18px; 
+  margin-bottom: 16px; 
+  color: #cccccc;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #3c3c3c;
+}
+
+.repo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 16px; }
+
+.repo-card { 
+  border: 1px solid #3c3c3c; 
+  padding: 16px; 
+  border-radius: 6px; 
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #252526;
+}
+.repo-card:hover { border-color: #007fd4; background: #2d2d30; }
+.repo-card.local { border-left: 3px solid #4ec9b0; }
+.repo-card.remote { border-left: 3px solid #569cd6; }
+
+.repo-icon { font-size: 32px; }
+.repo-info { flex: 1; min-width: 0; }
+.repo-info h3 { margin: 0 0 4px 0; color: #cccccc; font-size: 16px; }
+
+.repo-type-badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-bottom: 4px;
+}
+.local-badge { background: #094771; color: #4ec9b0; }
+.remote-badge { background: #0e639c; color: #569cd6; }
+
+.repo-url { font-size: 12px; color: #858585; margin: 0 0 4px 0; word-break: break-all; }
+.repo-path { font-size: 12px; color: #858585; margin: 0 0 4px 0; word-break: break-all; }
+.repo-status { 
+  font-size: 12px; 
+  padding: 2px 6px; 
+  border-radius: 2px;
+  display: inline-block;
+}
+.repo-status.synced { background: #094771; color: #4ec9b0; }
+.repo-status.failed { background: #5a1d1d; color: #f48771; }
+.repo-status.idle { background: #3a3d41; color: #dcdcaa; }
+.repo-time { font-size: 11px; color: #858585; margin: 4px 0 0 0; }
+
+.repo-actions { display: flex; gap: 8px; }
+.action-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+.action-btn.upload {
+  background: #0e639c;
+  color: #fff;
+}
+.action-btn.upload:hover { background: #1177bb; }
+.action-btn:disabled {
+  background: #3c3c3c;
+  color: #858585;
+  cursor: not-allowed;
+}
+
+.sync-btn { 
+  padding: 6px 12px; 
+  background: #3c3c3c; 
+  color: #cccccc; 
+  border: none; 
+  cursor: pointer; 
+  border-radius: 4px;
+  font-size: 12px;
+}
+.sync-btn:hover { background: #505050; }
+
+.add-remote-section { margin-top: 24px; }
+
+.btn { 
+  padding: 8px 16px; 
+  background: #0e639c; 
+  color: #fff; 
+  border: none; 
+  cursor: pointer; 
+  border-radius: 2px;
+  font-size: 13px;
+  transition: background 0.2s;
+}
+.btn:hover { background: #1177bb; }
+.btn.primary { background: #0e639c; }
+.btn.primary:hover { background: #1177bb; }
+.btn:disabled { background: #3c3c3c; cursor: not-allowed; }
+
+.empty-state { margin-top: 40px; text-align: center; color: #858585; }
+
+.vscode-layout { 
+  display: flex; 
+  height: 100%; 
+  width: 100%; 
+  background: #1e1e1e;
+}
+
+.activity-bar {
+  width: 48px;
+  background: #333333;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 12px;
+  gap: 8px;
+}
+
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  color: #858585;
+  border-left: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.activity-icon:hover {
+  color: #ffffff;
+  background: #2a2d2e;
+}
+
+.activity-icon.active {
+  color: #ffffff;
+  border-left-color: #ffffff;
+}
+
+.sidebar-left {
+  width: 260px;
+  background: #252526;
+  border-right: 1px solid #1e1e1e;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #1e1e1e;
+  background: #252526;
+}
+
+.header-info { display: flex; align-items: center; gap: 8px; }
+
+.header-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #cccccc;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.repo-tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.repo-tag.local { background: #094771; color: #4ec9b0; }
+.repo-tag.remote { background: #0e639c; color: #569cd6; }
+
+.close-btn {
+  cursor: pointer;
+  color: #858585;
+  font-size: 18px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+}
+
+.close-btn:hover {
+  background: #3c3c3c;
+  color: #ffffff;
+}
+
+.search-box {
+  padding: 8px;
+  border-bottom: 1px solid #1e1e1e;
+  background: #252526;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 5px 10px;
+  background: #3c3c3c;
+  border: 1px solid #3c3c3c;
+  color: #cccccc;
+  border-radius: 2px;
+  font-size: 13px;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.search-box input:focus {
+  border-color: #007fd4;
+}
+
+.search-box input::placeholder {
+  color: #858585;
+}
+
+.toolbar {
+  padding: 8px;
+  border-bottom: 1px solid #1e1e1e;
+}
+
+.toolbar-btn {
+  width: 100%;
+  padding: 6px 12px;
+  background: #0e639c;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.toolbar-btn:hover { background: #1177bb; }
+
+.file-tree { 
+  flex: 1; 
+  overflow-y: auto; 
+  padding: 4px 0;
+  background: #252526;
+}
+
+.tree-item-file { 
+  display: flex; 
+  align-items: center; 
+  gap: 4px; 
+  padding: 3px 8px 3px 20px; 
+  cursor: pointer;
+  font-size: 13px;
+  color: #cccccc;
+  line-height: 1.4;
+}
+
+.tree-item-file:hover { 
+  background: #2a2d2e; 
+}
+
+.tree-item-file.selected { 
+  background: #37373d; 
+  color: #ffffff; 
+}
+
+.file-icon { font-size: 14px; width: 16px; text-align: center; }
+.file-name { 
+  flex: 1; 
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis;
+}
+
+.delete-icon {
+  opacity: 0;
+  color: #f48771;
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+  transition: opacity 0.2s;
+}
+
+.tree-item-file:hover .delete-icon {
+  opacity: 1;
+}
+
+.delete-icon:hover {
+  color: #f48771;
+}
+
+.tree-item-dir { 
+  display: flex; 
+  align-items: center; 
+  gap: 2px; 
+  padding: 3px 8px; 
+  cursor: pointer;
+  font-size: 13px;
+  color: #cccccc;
+  line-height: 1.4;
+}
+
+.tree-item-dir:hover { 
+  background: #2a2d2e; 
+}
+
+.dir-icon { 
+  font-size: 8px; 
+  color: #858585;
+  width: 12px;
+  text-align: center;
+  transition: transform 0.15s;
+}
+
+.dir-icon-folder {
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+}
+
+.dir-name { 
+  flex: 1; 
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tree-children { 
+  border-left: 1px solid #3c3c3c;
+  margin-left: 8px;
+  padding-left: 4px;
+}
+
+.content-area { 
+  flex: 1; 
+  background: #1e1e1e; 
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.empty-content { 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  justify-content: center; 
+  height: 100%; 
+  color: #858585;
+}
+
+.empty-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+
+.note-view { padding: 24px 32px; max-width: 900px; margin: 0 auto; }
+
+.note-header { 
+  margin-bottom: 20px; 
+  padding-bottom: 16px; 
+  border-bottom: 1px solid #3c3c3c; 
+}
+
+.note-header h1 { 
+  margin: 0; 
+  font-size: 22px;
+  color: #ffffff;
+}
+
+.note-meta { 
+  display: flex; 
+  gap: 16px; 
+  margin-top: 8px; 
+  font-size: 12px; 
+  color: #858585;
+  align-items: center;
+}
+
+.delete-link {
+  color: #f48771;
+  cursor: pointer;
+}
+
+.delete-link:hover {
+  color: #f8d7da;
+  text-decoration: underline;
+}
+
+.note-content { 
+  line-height: 1.8; 
+  font-size: 14px;
+  color: #d4d4d4;
+}
+
+.note-content h1 { 
+  font-size: 24px; 
+  border-bottom: 1px solid #3c3c3c; 
+  padding-bottom: 8px; 
+  margin-top: 32px;
+  color: #ffffff;
+}
+
+.note-content h2 { 
+  font-size: 20px; 
+  margin-top: 24px; 
+  color: #e0e0e0;
+}
+
+.note-content h3 { 
+  font-size: 18px; 
+  margin-top: 20px;
+  color: #e0e0e0;
+}
+
+.note-content p {
+  margin: 12px 0;
+}
+
+.note-content pre { 
+  background: #2d2d30; 
+  padding: 16px; 
+  border-radius: 4px; 
+  overflow-x: auto;
+  font-size: 13px;
+  border: 1px solid #3c3c3c;
+}
+
+.note-content code { 
+  background: #2d2d30; 
+  padding: 2px 6px; 
+  border-radius: 3px; 
+  font-size: 13px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  color: #dcdcaa;
+}
+
+.note-content pre code { 
+  background: none; 
+  padding: 0; 
+  color: inherit;
+}
+
+.note-content ul { 
+  margin: 8px 0; 
+  padding-left: 24px; 
+  list-style: disc;
+}
+
+.note-content li { 
+  margin: 4px 0; 
+}
+
+.note-content strong { 
+  font-weight: 600;
+  color: #ffffff; 
+}
+
+.note-content em { 
+  font-style: italic; 
+}
+
+.sidebar-right {
+  width: 220px;
+  background: #252526;
+  border-left: 1px solid #1e1e1e;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.toc-header {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #1e1e1e;
+  background: #252526;
+  font-size: 11px;
+  font-weight: 600;
+  color: #cccccc;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.empty-toc { padding: 16px; text-align: center; color: #858585; font-size: 13px; }
+
+.toc-list { 
+  flex: 1; 
+  overflow-y: auto; 
+  padding: 8px 0; 
+}
+
+.toc-item { 
+  padding: 4px 12px; 
+  cursor: pointer;
+  font-size: 13px;
+  border-radius: 2px;
+  color: #cccccc;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toc-item:hover { 
+  background: #2a2d2e; 
+  color: #ffffff;
+}
+
+.toc-item.level-1 { font-weight: 600; padding-left: 12px; }
+.toc-item.level-2 { padding-left: 28px; }
+.toc-item.level-3 { padding-left: 44px; }
+.toc-item.level-4 { padding-left: 60px; }
+.toc-item.level-5 { padding-left: 76px; }
+.toc-item.level-6 { padding-left: 92px; }
+
+.right-toggle {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 40px;
+  background: #333333;
+  color: #858585;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 4px 0 0 4px;
+  font-size: 12px;
+  z-index: 100;
+  transition: all 0.2s;
+}
+
+.right-toggle:hover {
+  background: #007fd4;
+  color: #ffffff;
+}
+
+.highlighted { 
+  animation: highlight 1s ease; 
+  background: #3a3d41; 
+  padding: 4px 8px; 
+  border-radius: 4px;
+}
+
+@keyframes highlight {
+  0% { background: #3a3d41; }
+  100% { background: transparent; }
+}
+
+.modal { 
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  right: 0; 
+  bottom: 0; 
+  background: rgba(0,0,0,0.6); 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  z-index: 1000; 
+}
+
+.modal-content { 
+  background: #252526; 
+  padding: 24px; 
+  border-radius: 6px; 
+  width: 90%; 
+  max-width: 450px;
+  border: 1px solid #3c3c3c;
+}
+
+.modal-content h3 {
+  margin: 0 0 16px 0;
+  color: #ffffff;
+}
+
+.modal-content input { 
+  width: 100%; 
+  padding: 8px 12px; 
+  margin: 8px 0; 
+  background: #3c3c3c;
+  border: 1px solid #3c3c3c; 
+  color: #cccccc;
+  border-radius: 2px; 
+  box-sizing: border-box;
+  outline: none;
+}
+
+.modal-content input:focus {
+  border-color: #007fd4;
+}
+
+.path-input {
+  margin-top: 12px !important;
+}
+
+.modal-actions { 
+  display: flex; 
+  justify-content: flex-end; 
+  gap: 8px; 
+  margin-top: 16px; 
+}
+
+.upload-area {
+  border: 2px dashed #3c3c3c;
+  border-radius: 6px;
+  padding: 32px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  margin: 16px 0;
+}
+
+.upload-area:hover {
+  border-color: #007fd4;
+}
+
+.upload-placeholder p {
+  margin: 8px 0;
+  color: #858585;
+}
+
+.upload-placeholder p:first-child {
+  font-size: 48px;
+}
+
+.upload-placeholder .hint {
+  font-size: 12px;
+  color: #666;
+}
+
+.upload-preview p {
+  margin: 8px 0;
+  color: #cccccc;
+}
+
+.upload-preview .hint {
+  font-size: 12px;
+  color: #858585;
+}
+
+.panel-enter-active,
+.panel-leave-active {
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+
+.panel-enter-from,
+.panel-leave-to {
+  width: 0;
+  opacity: 0;
+}
+
+.panel-right-enter-active,
+.panel-right-leave-active {
+  transition: all 0.25s ease;
+  overflow: hidden;
+}
+
+.panel-right-enter-from,
+.panel-right-leave-to {
+  width: 0;
+  opacity: 0;
+}
+</style>
