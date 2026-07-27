@@ -1,11 +1,14 @@
 import os
 import subprocess
 import shutil
+import logging
 from datetime import datetime
 from pathlib import Path
 from django.utils import timezone
 
 from .models import NoteRepository, NoteFile
+
+logger = logging.getLogger(__name__)
 
 
 class GitService:
@@ -16,6 +19,7 @@ class GitService:
 
     def _run_git_command(self, command, cwd=None):
         try:
+            logger.info(f'Running git command: {" ".join(command)}')
             result = subprocess.run(
                 command,
                 cwd=cwd or str(self.local_path),
@@ -23,18 +27,22 @@ class GitService:
                 text=True,
                 timeout=120
             )
+            if result.returncode != 0:
+                logger.error(f'Git command failed: {result.stderr}')
             return {
                 'success': result.returncode == 0,
                 'stdout': result.stdout.strip(),
                 'stderr': result.stderr.strip()
             }
         except subprocess.TimeoutExpired:
+            logger.error('Git command timed out')
             return {
                 'success': False,
                 'stdout': '',
                 'stderr': 'Command timed out'
             }
         except Exception as e:
+            logger.exception(f'Git command error: {e}')
             return {
                 'success': False,
                 'stdout': '',
@@ -107,6 +115,7 @@ class GitService:
                     
                     file_stat = os.stat(file_path)
                     last_modified = datetime.fromtimestamp(file_stat.st_mtime)
+                    last_modified = timezone.make_aware(last_modified)
                     
                     note_file = NoteFile(
                         repository=self.repository,
@@ -144,7 +153,7 @@ def sync_notes(repository_id=None):
         results.append({
             'repository': repo.name,
             'success': result['success'],
-            'message': result.get('sync_message', result.get('stderr', '')),
+            'message': repo.sync_message or result.get('stderr', ''),
             'notes_count': result.get('notes_count', 0)
         })
     return results
