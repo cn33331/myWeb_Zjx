@@ -228,24 +228,15 @@ cp nginx_bt.conf /www/server/panel/vhost/nginx/hub.conf
 ```bash
 cd /root/zjx/web/web
 
-# 1. 拉取最新代码
-git pull origin main
-
-# 2. 重新部署（更新依赖、迁移数据库、构建前端）
-./deploy_bt.sh
-
-# 3. 重启 Gunicorn 服务
-systemctl restart hub
-
-# 4. 重载 Nginx 配置（若 nginx_bt.conf 有变更）
-/www/server/nginx/sbin/nginx -t && /www/server/nginx/sbin/nginx -s reload
+# 一键更新（拉取代码、迁移数据库、构建前端、重启服务）
+chmod +x update.sh
+./update.sh
 ```
 
 **说明：**
-- `git pull` - 拉取远程仓库最新代码
-- `./deploy_bt.sh` - 自动完成依赖安装、前端构建、数据库迁移、静态文件收集
-- `systemctl restart hub` - 重启 Gunicorn 使后端代码生效
-- Nginx 重载仅在 Nginx 配置文件变更时需要
+- `./update.sh` - 自动完成代码拉取、依赖检查、数据库迁移、前端构建、服务重启
+- 首次部署请使用 `deploy_bt.sh`（交互式配置）
+- 日常更新使用 `update.sh`（非交互式快速更新）
 
 ## 安全注意事项
 
