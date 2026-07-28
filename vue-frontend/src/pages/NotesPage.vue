@@ -48,13 +48,28 @@
                 <p class="repo-url">{{ repo.repo_url }}</p>
                 <p class="repo-branch">🌿 分支: {{ repo.branch || 'main' }}</p>
                 <p class="repo-status" :class="repo.sync_status">
-                  {{ repo.sync_status === 'synced' ? '✓ 已同步' : repo.sync_status === 'failed' ? '✗ 同步失败' : '○ 未同步' }}
+                  <span v-if="syncingRepos.includes(repo.id)" class="spinner"></span>
+                  {{ syncingRepos.includes(repo.id) ? '同步中...' : repo.sync_status === 'synced' ? '✓ 已同步' : repo.sync_status === 'failed' ? '✗ 同步失败' : '○ 未同步' }}
                 </p>
-                <p v-if="repo.last_sync" class="repo-time">最后同步: {{ formatTime(repo.last_sync) }}</p>
+                <p v-if="repo.last_sync && !syncingRepos.includes(repo.id)" class="repo-time">最后同步: {{ formatTime(repo.last_sync) }}</p>
               </div>
               <div class="repo-actions">
-                <button @click.stop="showBranchSelector(repo)" class="branch-btn">🌿 {{ repo.branch || 'main' }}</button>
-                <button @click.stop="syncRepo(repo.id)" class="sync-btn">同步</button>
+                <button 
+                  @click.stop="showBranchSelector(repo)" 
+                  class="branch-btn"
+                  :disabled="!isLoggedIn || syncingRepos.includes(repo.id)"
+                  :title="!isLoggedIn ? '请先登录' : '切换分支'"
+                >
+                  🌿 {{ repo.branch || 'main' }}
+                </button>
+                <button 
+                  @click.stop="syncRepo(repo.id)" 
+                  class="sync-btn"
+                  :disabled="syncingRepos.includes(repo.id)"
+                >
+                  <span v-if="syncingRepos.includes(repo.id)" class="spinner-small"></span>
+                  {{ syncingRepos.includes(repo.id) ? '同步中' : '同步' }}
+                </button>
               </div>
             </div>
           </div>
@@ -69,7 +84,16 @@
     <div v-else class="vscode-layout">
       <div class="activity-bar">
         <div class="activity-icon active" @click="leftPanelOpen = !leftPanelOpen" title="文件树">📄</div>
-        <div v-if="selectedRepo.repo_type === 'remote'" class="activity-icon" @click="syncRepo(selectedRepo.id)" title="同步">🔄</div>
+        <div 
+          v-if="selectedRepo.repo_type === 'remote'" 
+          class="activity-icon" 
+          :class="{ 'icon-spinning': syncingRepos.includes(selectedRepo.id) }"
+          @click="syncRepo(selectedRepo.id)" 
+          :title="syncingRepos.includes(selectedRepo.id) ? '同步中...' : '同步'"
+        >
+          <span v-if="syncingRepos.includes(selectedRepo.id)" class="spinner-small"></span>
+          <span v-else>🔄</span>
+        </div>
         <div v-if="selectedRepo.repo_type === 'local'" class="activity-icon" @click="uploadNote(selectedRepo.id)" title="上传">📤</div>
         <div class="activity-icon" @click="selectedRepo = null" title="返回">⬅️</div>
       </div>
@@ -320,6 +344,7 @@ const rightPanelOpen = ref(true);
 const currentBranch = ref('main');
 const availableBranches = ref([]);
 const branchLoading = ref(false);
+const syncingRepos = ref([]);
 
 const isLoggedIn = computed(() => authStore.isAuthenticated);
 
@@ -388,6 +413,9 @@ const toggleExpand = (item) => {
 };
 
 const syncRepo = async (id) => {
+  if (syncingRepos.value.includes(id)) return;
+  
+  syncingRepos.value = [...syncingRepos.value, id];
   try {
     await axios.post(`/api/notes/repositories/${id}/sync/`);
     await loadRepos();
@@ -396,6 +424,8 @@ const syncRepo = async (id) => {
     }
   } catch (e) {
     console.error('同步失败:', e);
+  } finally {
+    syncingRepos.value = syncingRepos.value.filter(r => r !== id);
   }
 };
 
@@ -531,6 +561,12 @@ const deleteNote = async (note) => {
 };
 
 const showBranchSelector = async (repo) => {
+  if (!isLoggedIn.value) {
+    alert('请先登录后再切换分支！');
+    window.location.href = '/login';
+    return;
+  }
+  
   selectedRepo.value = repo;
   currentBranch.value = repo.branch || 'main';
   showBranchModal.value = true;
@@ -727,8 +763,15 @@ onMounted(() => {
   cursor: pointer; 
   border-radius: 4px;
   font-size: 12px;
+  display: inline-flex;
+  align-items: center;
 }
-.sync-btn:hover { background: #505050; }
+.sync-btn:hover:not(:disabled) { background: #505050; }
+.sync-btn:disabled { 
+  opacity: 0.6; 
+  cursor: not-allowed;
+  background: #3c3c3c;
+}
 
 .add-remote-section { margin-top: 24px; }
 
@@ -787,6 +830,11 @@ onMounted(() => {
 .activity-icon.active {
   color: #ffffff;
   border-left-color: #ffffff;
+}
+
+.icon-spinning {
+  cursor: progress !important;
+  pointer-events: none;
 }
 
 .sidebar-left {
@@ -1329,9 +1377,42 @@ onMounted(() => {
   transition: all 0.2s;
 }
 
-.branch-btn:hover {
+.branch-btn:hover:not(:disabled) {
   background: #505050;
   color: #dcb67a;
+}
+
+.branch-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #3c3c3c;
+  border-top-color: #4ec9b0;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.spinner-small {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid #3c3c3c;
+  border-top-color: #cccccc;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .branch-list {
