@@ -198,17 +198,24 @@ class UploadNoteView(generics.GenericAPIView):
         if not uploaded_file:
             return Response({'error': '未提供文件'}, status=status.HTTP_400_BAD_REQUEST)
         
-        file_path = request.data.get('file_path', '')
+        file_path = request.data.get('file_path', '').strip().strip('/')
         file_name = uploaded_file.name
         extension = os.path.splitext(file_name)[1]
         
         content = uploaded_file.read().decode('utf-8', errors='ignore')
         
         if file_path:
-            full_path = os.path.join(repo.local_path, file_path)
+            full_path = os.path.join(repo.local_path, file_path, file_name)
+            relative_path = os.path.join(file_path, file_name)
         else:
             full_path = os.path.join(repo.local_path, file_name)
-            file_path = file_name
+            relative_path = file_name
+        
+        full_path = os.path.normpath(full_path)
+        local_path_norm = os.path.normpath(repo.local_path)
+        
+        if not full_path.startswith(local_path_norm):
+            return Response({'error': '非法路径'}, status=status.HTTP_400_BAD_REQUEST)
         
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
         
@@ -219,7 +226,7 @@ class UploadNoteView(generics.GenericAPIView):
         
         note_file, created = NoteFile.objects.update_or_create(
             repository=repo,
-            file_path=file_path,
+            file_path=relative_path,
             defaults={
                 'file_name': file_name,
                 'extension': extension,
@@ -232,7 +239,7 @@ class UploadNoteView(generics.GenericAPIView):
         
         return Response({
             'success': True,
-            'file_path': file_path,
+            'file_path': relative_path,
             'file_name': file_name,
             'size': size,
             'created': created
@@ -259,6 +266,11 @@ class DeleteNoteView(generics.GenericAPIView):
             return Response({'error': '未提供文件路径'}, status=status.HTTP_400_BAD_REQUEST)
         
         full_path = os.path.join(repo.local_path, file_path)
+        full_path = os.path.normpath(full_path)
+        local_path_norm = os.path.normpath(repo.local_path)
+        
+        if not full_path.startswith(local_path_norm):
+            return Response({'error': '非法路径'}, status=status.HTTP_400_BAD_REQUEST)
         
         if os.path.exists(full_path):
             os.remove(full_path)
