@@ -73,24 +73,48 @@ class GitService:
         if not self.local_path.exists():
             return self.clone_repository()
         
-        result = self._run_git_command(['git', 'fetch', 'origin'])
+        # 确保在正确的分支上
+        current_branch_result = self._run_git_command(['git', 'rev-parse', '--abbrev-ref', 'HEAD'])
+        current_branch = current_branch_result['stdout'] if current_branch_result['success'] else ''
         
-        if result['success']:
-            result = self._run_git_command(['git', 'pull', 'origin', self.branch])
-        else:
-            result = self._run_git_command(['git', 'pull', 'origin', self.branch])
+        if current_branch and current_branch != self.branch:
+            # 切换分支
+            self._run_git_command(['git', 'checkout', self.branch])
         
-        if result['success']:
+        # 先尝试 fetch
+        fetch_result = self._run_git_command(['git', 'fetch', 'origin'])
+        
+        # 使用 --rebase 拉取，避免分支分歧问题
+        pull_result = self._run_git_command(['git', 'pull', '--rebase', 'origin', self.branch])
+        
+        if not pull_result['success']:
+            # 如果 rebase 失败，尝试放弃本地更改后重置
+            reset_result = self._run_git_command(['git', 'reset', '--hard', f'origin/{self.branch}'])
+            if reset_result['success']:
+                pull_result = {
+                    'success': True,
+                    'stdout': f'已重置到 origin/{self.branch}',
+                    'stderr': ''
+                }
+        
+        if not pull_result['success']:
+            # 最后手段：删除仓库重新克隆
+            import shutil
+            if self.local_path.exists():
+                shutil.rmtree(str(self.local_path))
+            return self.clone_repository()
+        
+        if pull_result['success']:
             self.repository.sync_status = 'synced'
-            self.repository.sync_message = result['stdout'] or f'拉取成功 (分支: {self.branch})'
+            self.repository.sync_message = pull_result['stdout'] or f'拉取成功 (分支: {self.branch})'
             self.repository.last_sync = timezone.now()
             self.repository.save()
         else:
             self.repository.sync_status = 'failed'
-            self.repository.sync_message = result['stderr'] or '拉取失败'
+            self.repository.sync_message = pull_result['stderr'] or '拉取失败'
             self.repository.save()
         
-        return result
+        return pull_result
 
     def get_branches(self):
         result = self._run_git_command(['git', 'ls-remote', '--heads', self.repo_url])
