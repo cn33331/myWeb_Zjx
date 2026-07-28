@@ -224,7 +224,7 @@
               </span>
             </div>
           </div>
-          <div class="note-content" v-html="renderedContent"></div>
+          <div class="note-content markdown-body" v-html="renderedContent"></div>
         </div>
       </div>
 
@@ -331,9 +331,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch, onUnmounted } from 'vue';
+import { ref, onMounted, computed, watch, onUnmounted, nextTick } from 'vue';
 import axios from 'axios';
 import { useAuthStore } from '@/stores/auth';
+import { renderMarkdown, generateToc, renderAllMermaids } from '@/utils/markdown';
+import '@/styles/markdown.css';
+import 'katex/dist/katex.min.css';
 
 const authStore = useAuthStore();
 
@@ -489,7 +492,8 @@ const openNote = async (note) => {
   try {
     const res = await axios.get(`/api/notes/repositories/${selectedRepo.value.id}/note/${encodeURIComponent(note.file_path)}/`);
     noteContent.value = res.data.content || '';
-    noteToc.value = res.data.toc || [];
+    // 使用前端 generateToc 生成目录（更准确地匹配 marked 生成的 ID）
+    noteToc.value = generateToc(noteContent.value);
   } catch (error) {
     console.error('加载笔记内容失败:', error);
     noteContent.value = '加载失败';
@@ -659,23 +663,18 @@ const handleSearch = () => {
 
 const renderedContent = computed(() => {
   if (!noteContent.value) return '';
-  let html = noteContent.value
-    .replace(/^### (.*$)/gim, '<h3 id="heading-$1">$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2 id="heading-$1">$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1 id="heading-$1">$1</h1>')
-    .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-    .replace(/\*(.*)\*/gim, '<em>$1</em>')
-    .replace(/^- (.*$)/gim, '<li>$1</li>')
-    .replace(/^\d+\. (.*$)/gim, '<li>$1</li>')
-    .replace(/```(\w+)?\n([\s\S]*?)```/gim, '<pre><code>$2</code></pre>')
-    .replace(/`([^`]+)`/gim, '<code>$1</code>')
-    .replace(/\n/gim, '<br/>');
-  html = html.replace(/(<li>.*<\/li>)/gim, '<ul>$1</ul>').replace(/<\/ul><ul>/gim, '');
-  html = html.replace(/id="heading-(.*?)"/gim, (match, title) => {
-    const slug = title.toLowerCase().replace(/[^a-zA-Z0-9\u4e00-\u9fff]+/g, '-').replace(/^-|-$/g, '');
-    return `id="${slug || 'heading-' + Math.random().toString(36).substr(2, 9)}"`;
-  });
-  return html;
+  return renderMarkdown(noteContent.value);
+});
+
+// 监听内容变化，渲染 Mermaid 图表
+watch(renderedContent, async (newContent) => {
+  if (newContent && currentNote.value) {
+    await nextTick();
+    const container = document.querySelector('.note-content');
+    if (container) {
+      await renderAllMermaids(container);
+    }
+  }
 });
 
 const scrollToHeading = (slug) => {

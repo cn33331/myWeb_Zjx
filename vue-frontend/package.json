@@ -10,6 +10,11 @@
   },
   "dependencies": {
     "axios": "^1.18.1",
+    "dompurify": "^3.4.12",
+    "highlight.js": "^11.11.1",
+    "katex": "^0.18.1",
+    "marked": "^18.0.7",
+    "mermaid": "^11.16.0",
     "pinia": "^4.0.2",
     "vue": "^3.5.13",
     "vue-router": "^4.6.4"
