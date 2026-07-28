@@ -566,7 +566,7 @@ const selectBranch = async (branch) => {
     
     if (res.data.success) {
       currentBranch.value = branch;
-      repo = selectedRepo.value;
+      const repo = selectedRepo.value;
       repo.branch = branch;
       
       const index = repos.value.findIndex(r => r.id === repo.id);
