@@ -313,6 +313,20 @@
         </div>
       </div>
     </div>
+
+    <div v-if="syncErrorModal" class="modal" @click.self="syncErrorModal = false">
+      <div class="modal-content error-modal">
+        <div class="error-icon">⚠️</div>
+        <h3>同步失败</h3>
+        <p class="error-repo">仓库: {{ syncErrorRepo }}</p>
+        <div class="error-message">
+          <p>{{ syncErrorMsg }}</p>
+        </div>
+        <div class="modal-actions">
+          <button @click="syncErrorModal = false" class="btn primary">知道了</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -345,6 +359,9 @@ const currentBranch = ref('main');
 const availableBranches = ref([]);
 const branchLoading = ref(false);
 const syncingRepos = ref([]);
+const syncErrorModal = ref(false);
+const syncErrorMsg = ref('');
+const syncErrorRepo = ref('');
 
 const isLoggedIn = computed(() => authStore.isAuthenticated);
 
@@ -417,13 +434,28 @@ const syncRepo = async (id) => {
   
   syncingRepos.value = [...syncingRepos.value, id];
   try {
-    await axios.post(`/api/notes/repositories/${id}/sync/`);
+    const res = await axios.post(`/api/notes/repositories/${id}/sync/`);
+    
+    // 检查后端返回的结果
+    if (Array.isArray(res.data)) {
+      // 如果是数组格式（sync_notes 返回）
+      const firstResult = res.data[0];
+      if (firstResult && !firstResult.success) {
+        throw new Error(firstResult.message || firstResult.stderr || '同步失败');
+      }
+    } else if (res.data && !res.data.success && res.data.sync_status === 'failed') {
+      throw new Error(res.data.sync_message || '同步失败');
+    }
+    
     await loadRepos();
     if (selectedRepo.value?.id === id) {
       await loadFileTree(id);
     }
   } catch (e) {
     console.error('同步失败:', e);
+    syncErrorRepo.value = repos.value.find(r => r.id === id)?.name || '未知仓库';
+    syncErrorMsg.value = e.message || e.response?.data?.error || e.response?.data?.sync_message || '未知错误';
+    syncErrorModal.value = true;
   } finally {
     syncingRepos.value = syncingRepos.value.filter(r => r !== id);
   }
@@ -1444,5 +1476,46 @@ onMounted(() => {
   font-size: 13px;
   color: #858585;
   margin: 8px 0;
+}
+
+.error-modal {
+  text-align: center;
+  border-left: 4px solid #f48771;
+}
+
+.error-icon {
+  font-size: 48px;
+  margin: 0 0 16px 0;
+}
+
+.error-modal h3 {
+  color: #f48771 !important;
+  margin: 0 0 12px 0 !important;
+}
+
+.error-repo {
+  color: #858585;
+  font-size: 13px;
+  margin: 0 0 16px 0 !important;
+}
+
+.error-message {
+  background: #1e1e1e;
+  border: 1px solid #3c3c3c;
+  border-radius: 4px;
+  padding: 12px;
+  margin: 0 0 16px 0 !important;
+  text-align: left;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.error-message p {
+  color: #cccccc;
+  font-size: 13px;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
 }
 </style>
