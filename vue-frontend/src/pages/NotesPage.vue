@@ -338,6 +338,34 @@ import { renderMarkdown, generateToc, renderAllMermaids } from '@/utils/markdown
 import '@/styles/markdown.css';
 import 'katex/dist/katex.min.css';
 
+// 全局 axios 拦截器：若携带的 token 已过期导致 401，则清除失效 token 并重试（作为匿名请求）
+axios.interceptors.response.use(
+  response => response,
+  async error => {
+    if (error.response?.status === 401) {
+      const originalRequest = error.config;
+      // 已经重试过则不再重试
+      if (originalRequest._retry) {
+        return Promise.reject(error);
+      }
+      originalRequest._retry = true;
+      // 清除本地失效的 token，避免影响后续请求
+      const accessToken = localStorage.getItem('access_token');
+      if (accessToken) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        delete axios.defaults.headers.common['Authorization'];
+        if (authStore && typeof authStore.clearTokens === 'function') {
+          authStore.clearTokens();
+        }
+      }
+      delete originalRequest.headers.Authorization;
+      return axios(originalRequest);
+    }
+    return Promise.reject(error);
+  }
+);
+
 const authStore = useAuthStore();
 
 const repos = ref([]);
@@ -706,42 +734,43 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.notes-page { height: 100vh; display: flex; background: #1e1e1e; color: #cccccc; }
+.notes-page { height: 100vh; display: flex; background: #f0f4fa; color: #1a1a1a; }
 
-.repo-select-page { flex: 1; padding: 20px; overflow-y: auto; background: #1e1e1e; }
+.repo-select-page { flex: 1; padding: 24px; overflow-y: auto; background: #f0f4fa; }
 .container { max-width: 1200px; margin: 0 auto; }
 
-.subtitle { color: #858585; margin-bottom: 24px; }
+.subtitle { color: #666666; margin-bottom: 24px; }
 
 .repo-section { margin-bottom: 32px; }
 .section-title { 
   font-size: 18px; 
   margin-bottom: 16px; 
-  color: #cccccc;
+  color: #1a1a1a;
   padding-bottom: 8px;
-  border-bottom: 1px solid #3c3c3c;
+  border-bottom: 1px solid #e0e6ed;
 }
 
 .repo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 16px; }
 
 .repo-card { 
-  border: 1px solid #3c3c3c; 
+  border: 1px solid #e0e6ed; 
   padding: 16px; 
-  border-radius: 6px; 
+  border-radius: 8px; 
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #252526;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
-.repo-card:hover { border-color: #007fd4; background: #2d2d30; }
-.repo-card.local { border-left: 3px solid #4ec9b0; }
-.repo-card.remote { border-left: 3px solid #569cd6; }
+.repo-card:hover { border-color: #0078d4; box-shadow: 0 2px 8px rgba(0,120,212,0.12); }
+.repo-card.local { border-left: 3px solid #107c10; }
+.repo-card.remote { border-left: 3px solid #0078d4; }
 
 .repo-icon { font-size: 32px; }
 .repo-info { flex: 1; min-width: 0; }
-.repo-info h3 { margin: 0 0 4px 0; color: #cccccc; font-size: 16px; }
+.repo-info h3 { margin: 0 0 4px 0; color: #1a1a1a; font-size: 16px; }
 
 .repo-type-badge {
   display: inline-block;
@@ -750,21 +779,21 @@ onMounted(() => {
   border-radius: 10px;
   margin-bottom: 4px;
 }
-.local-badge { background: #094771; color: #4ec9b0; }
-.remote-badge { background: #0e639c; color: #569cd6; }
+.local-badge { background: #dff6dd; color: #107c10; }
+.remote-badge { background: #deecf9; color: #0078d4; }
 
-.repo-url { font-size: 12px; color: #858585; margin: 0 0 4px 0; word-break: break-all; }
-.repo-path { font-size: 12px; color: #858585; margin: 0 0 4px 0; word-break: break-all; }
+.repo-url { font-size: 12px; color: #666666; margin: 0 0 4px 0; word-break: break-all; }
+.repo-path { font-size: 12px; color: #666666; margin: 0 0 4px 0; word-break: break-all; }
 .repo-status { 
   font-size: 12px; 
   padding: 2px 6px; 
   border-radius: 2px;
   display: inline-block;
 }
-.repo-status.synced { background: #094771; color: #4ec9b0; }
-.repo-status.failed { background: #5a1d1d; color: #f48771; }
-.repo-status.idle { background: #3a3d41; color: #dcdcaa; }
-.repo-time { font-size: 11px; color: #858585; margin: 4px 0 0 0; }
+.repo-status.synced { background: #dff6dd; color: #107c10; }
+.repo-status.failed { background: #fde7e9; color: #d13438; }
+.repo-status.idle { background: #fff4ce; color: #ca5010; }
+.repo-time { font-size: 11px; color: #999999; margin: 4px 0 0 0; }
 
 .repo-actions { display: flex; gap: 8px; }
 .action-btn {
@@ -776,68 +805,69 @@ onMounted(() => {
   transition: all 0.2s;
 }
 .action-btn.upload {
-  background: #0e639c;
+  background: #0078d4;
   color: #fff;
 }
-.action-btn.upload:hover { background: #1177bb; }
+.action-btn.upload:hover { background: #106ebe; }
 .action-btn:disabled {
-  background: #3c3c3c;
-  color: #858585;
+  background: #e0e6ed;
+  color: #999999;
   cursor: not-allowed;
 }
 
 .sync-btn { 
   padding: 6px 12px; 
-  background: #3c3c3c; 
-  color: #cccccc; 
-  border: none; 
+  background: #f5f5f5; 
+  color: #333333; 
+  border: 1px solid #e0e6ed;
   cursor: pointer; 
   border-radius: 4px;
   font-size: 12px;
   display: inline-flex;
   align-items: center;
 }
-.sync-btn:hover:not(:disabled) { background: #505050; }
+.sync-btn:hover:not(:disabled) { background: #e8eaed; border-color: #0078d4; }
 .sync-btn:disabled { 
   opacity: 0.6; 
   cursor: not-allowed;
-  background: #3c3c3c;
+  background: #f5f5f5;
 }
 
 .add-remote-section { margin-top: 24px; }
 
 .btn { 
   padding: 8px 16px; 
-  background: #0e639c; 
+  background: #0078d4; 
   color: #fff; 
   border: none; 
   cursor: pointer; 
-  border-radius: 2px;
+  border-radius: 4px;
   font-size: 13px;
   transition: background 0.2s;
 }
-.btn:hover { background: #1177bb; }
-.btn.primary { background: #0e639c; }
-.btn.primary:hover { background: #1177bb; }
-.btn:disabled { background: #3c3c3c; cursor: not-allowed; }
+.btn:hover { background: #106ebe; }
+.btn.primary { background: #0078d4; }
+.btn.primary:hover { background: #106ebe; }
+.btn:disabled { background: #e0e6ed; color: #999999; cursor: not-allowed; }
 
-.empty-state { margin-top: 40px; text-align: center; color: #858585; }
+.empty-state { margin-top: 40px; text-align: center; color: #666666; }
 
 .vscode-layout { 
   display: flex; 
   height: 100%; 
   width: 100%; 
-  background: #1e1e1e;
+  background: #f0f4fa;
 }
 
 .activity-bar {
   width: 48px;
-  background: #333333;
+  background: #e8ecf1;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding-top: 12px;
   gap: 8px;
+  border-right: 1px solid #e0e6ed;
 }
 
 .activity-icon {
@@ -848,19 +878,20 @@ onMounted(() => {
   justify-content: center;
   font-size: 20px;
   cursor: pointer;
-  color: #858585;
+  color: #666666;
   border-left: 2px solid transparent;
   transition: all 0.2s;
 }
 
 .activity-icon:hover {
-  color: #ffffff;
-  background: #2a2d2e;
+  color: #1a1a1a;
+  background: #dbe3ee;
 }
 
 .activity-icon.active {
-  color: #ffffff;
-  border-left-color: #ffffff;
+  color: #0078d4;
+  border-left-color: #0078d4;
+  background: #ffffff;
 }
 
 .icon-spinning {
@@ -870,20 +901,20 @@ onMounted(() => {
 
 .sidebar-left {
   width: 260px;
-  background: #252526;
-  border-right: 1px solid #1e1e1e;
+  background: #ffffff;
+  border-right: 1px solid #e0e6ed;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 .sidebar-header {
-  padding: 8px 12px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #1e1e1e;
-  background: #252526;
+  border-bottom: 1px solid #e0e6ed;
+  background: #ffffff;
 }
 
 .header-info { display: flex; align-items: center; gap: 8px; }
@@ -891,7 +922,7 @@ onMounted(() => {
 .header-title {
   font-size: 11px;
   font-weight: 600;
-  color: #cccccc;
+  color: #333333;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -901,12 +932,12 @@ onMounted(() => {
   padding: 2px 6px;
   border-radius: 3px;
 }
-.repo-tag.local { background: #094771; color: #4ec9b0; }
-.repo-tag.remote { background: #0e639c; color: #569cd6; }
+.repo-tag.local { background: #dff6dd; color: #107c10; }
+.repo-tag.remote { background: #deecf9; color: #0078d4; }
 
 .close-btn {
   cursor: pointer;
-  color: #858585;
+  color: #999999;
   font-size: 18px;
   width: 20px;
   height: 20px;
@@ -917,45 +948,47 @@ onMounted(() => {
 }
 
 .close-btn:hover {
-  background: #3c3c3c;
-  color: #ffffff;
+  background: #e8eaed;
+  color: #333333;
 }
 
 .search-box {
   padding: 8px;
-  border-bottom: 1px solid #1e1e1e;
-  background: #252526;
+  border-bottom: 1px solid #e0e6ed;
+  background: #f8fafb;
 }
 
 .search-box input {
   width: 100%;
   padding: 5px 10px;
-  background: #3c3c3c;
-  border: 1px solid #3c3c3c;
-  color: #cccccc;
-  border-radius: 2px;
+  background: #ffffff;
+  border: 1px solid #e0e6ed;
+  color: #1a1a1a;
+  border-radius: 4px;
   font-size: 13px;
   box-sizing: border-box;
   outline: none;
 }
 
 .search-box input:focus {
-  border-color: #007fd4;
+  border-color: #0078d4;
+  box-shadow: 0 0 0 2px rgba(0,120,212,0.15);
 }
 
 .search-box input::placeholder {
-  color: #858585;
+  color: #999999;
 }
 
 .toolbar {
   padding: 8px;
-  border-bottom: 1px solid #1e1e1e;
+  border-bottom: 1px solid #e0e6ed;
+  background: #f8fafb;
 }
 
 .toolbar-btn {
   width: 100%;
   padding: 6px 12px;
-  background: #0e639c;
+  background: #0078d4;
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -963,13 +996,13 @@ onMounted(() => {
   font-size: 12px;
 }
 
-.toolbar-btn:hover { background: #1177bb; }
+.toolbar-btn:hover { background: #106ebe; }
 
 .file-tree { 
   flex: 1; 
   overflow-y: auto; 
   padding: 4px 0;
-  background: #252526;
+  background: #ffffff;
 }
 
 .tree-item-file { 
@@ -979,17 +1012,18 @@ onMounted(() => {
   padding: 3px 8px 3px 20px; 
   cursor: pointer;
   font-size: 13px;
-  color: #cccccc;
+  color: #333333;
   line-height: 1.4;
 }
 
 .tree-item-file:hover { 
-  background: #2a2d2e; 
+  background: #f0f4fa; 
 }
 
 .tree-item-file.selected { 
-  background: #37373d; 
-  color: #ffffff; 
+  background: #e5f1fb; 
+  color: #0078d4; 
+  font-weight: 500;
 }
 
 .file-icon { font-size: 14px; width: 16px; text-align: center; }
@@ -1002,7 +1036,7 @@ onMounted(() => {
 
 .delete-icon {
   opacity: 0;
-  color: #f48771;
+  color: #d13438;
   font-size: 14px;
   width: 16px;
   text-align: center;
@@ -1014,7 +1048,7 @@ onMounted(() => {
 }
 
 .delete-icon:hover {
-  color: #f48771;
+  color: #a4262c;
 }
 
 .tree-item-dir { 
@@ -1024,17 +1058,17 @@ onMounted(() => {
   padding: 3px 8px; 
   cursor: pointer;
   font-size: 13px;
-  color: #cccccc;
+  color: #333333;
   line-height: 1.4;
 }
 
 .tree-item-dir:hover { 
-  background: #2a2d2e; 
+  background: #f0f4fa; 
 }
 
 .dir-icon { 
   font-size: 8px; 
-  color: #858585;
+  color: #999999;
   width: 12px;
   text-align: center;
   transition: transform 0.15s;
@@ -1055,14 +1089,14 @@ onMounted(() => {
 }
 
 .tree-children { 
-  border-left: 1px solid #3c3c3c;
+  border-left: 1px solid #e0e6ed;
   margin-left: 8px;
   padding-left: 4px;
 }
 
 .content-area { 
   flex: 1; 
-  background: #1e1e1e; 
+  background: #ffffff; 
   overflow-y: auto;
   min-width: 0;
 }
@@ -1073,7 +1107,7 @@ onMounted(() => {
   align-items: center; 
   justify-content: center; 
   height: 100%; 
-  color: #858585;
+  color: #999999;
 }
 
 .empty-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
@@ -1083,13 +1117,13 @@ onMounted(() => {
 .note-header { 
   margin-bottom: 20px; 
   padding-bottom: 16px; 
-  border-bottom: 1px solid #3c3c3c; 
+  border-bottom: 1px solid #e0e6ed; 
 }
 
 .note-header h1 { 
   margin: 0; 
   font-size: 22px;
-  color: #ffffff;
+  color: #1a1a1a;
 }
 
 .note-meta { 
@@ -1097,117 +1131,44 @@ onMounted(() => {
   gap: 16px; 
   margin-top: 8px; 
   font-size: 12px; 
-  color: #858585;
+  color: #666666;
   align-items: center;
 }
 
 .delete-link {
-  color: #f48771;
+  color: #d13438;
   cursor: pointer;
 }
 
 .delete-link:hover {
-  color: #f8d7da;
+  color: #a4262c;
   text-decoration: underline;
-}
-
-.note-content { 
-  line-height: 1.8; 
-  font-size: 14px;
-  color: #d4d4d4;
-}
-
-.note-content h1 { 
-  font-size: 24px; 
-  border-bottom: 1px solid #3c3c3c; 
-  padding-bottom: 8px; 
-  margin-top: 32px;
-  color: #ffffff;
-}
-
-.note-content h2 { 
-  font-size: 20px; 
-  margin-top: 24px; 
-  color: #e0e0e0;
-}
-
-.note-content h3 { 
-  font-size: 18px; 
-  margin-top: 20px;
-  color: #e0e0e0;
-}
-
-.note-content p {
-  margin: 12px 0;
-}
-
-.note-content pre { 
-  background: #2d2d30; 
-  padding: 16px; 
-  border-radius: 4px; 
-  overflow-x: auto;
-  font-size: 13px;
-  border: 1px solid #3c3c3c;
-}
-
-.note-content code { 
-  background: #2d2d30; 
-  padding: 2px 6px; 
-  border-radius: 3px; 
-  font-size: 13px;
-  font-family: 'Consolas', 'Monaco', monospace;
-  color: #dcdcaa;
-}
-
-.note-content pre code { 
-  background: none; 
-  padding: 0; 
-  color: inherit;
-}
-
-.note-content ul { 
-  margin: 8px 0; 
-  padding-left: 24px; 
-  list-style: disc;
-}
-
-.note-content li { 
-  margin: 4px 0; 
-}
-
-.note-content strong { 
-  font-weight: 600;
-  color: #ffffff; 
-}
-
-.note-content em { 
-  font-style: italic; 
 }
 
 .sidebar-right {
   width: 220px;
-  background: #252526;
-  border-left: 1px solid #1e1e1e;
+  background: #ffffff;
+  border-left: 1px solid #e0e6ed;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 .toc-header {
-  padding: 8px 12px;
+  padding: 10px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid #1e1e1e;
-  background: #252526;
+  border-bottom: 1px solid #e0e6ed;
+  background: #ffffff;
   font-size: 11px;
   font-weight: 600;
-  color: #cccccc;
+  color: #333333;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.empty-toc { padding: 16px; text-align: center; color: #858585; font-size: 13px; }
+.empty-toc { padding: 16px; text-align: center; color: #999999; font-size: 13px; }
 
 .toc-list { 
   flex: 1; 
@@ -1220,7 +1181,7 @@ onMounted(() => {
   cursor: pointer;
   font-size: 13px;
   border-radius: 2px;
-  color: #cccccc;
+  color: #333333;
   line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
@@ -1228,8 +1189,8 @@ onMounted(() => {
 }
 
 .toc-item:hover { 
-  background: #2a2d2e; 
-  color: #ffffff;
+  background: #f0f4fa; 
+  color: #0078d4;
 }
 
 .toc-item.level-1 { font-weight: 600; padding-left: 12px; }
@@ -1246,32 +1207,34 @@ onMounted(() => {
   transform: translateY(-50%);
   width: 20px;
   height: 40px;
-  background: #333333;
-  color: #858585;
+  background: #e8ecf1;
+  color: #666666;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  border-radius: 4px 0 0 4px;
+  border-radius: 0 4px 4px 0;
   font-size: 12px;
   z-index: 100;
   transition: all 0.2s;
+  border: 1px solid #e0e6ed;
+  border-right: none;
 }
 
 .right-toggle:hover {
-  background: #007fd4;
+  background: #0078d4;
   color: #ffffff;
 }
 
 .highlighted { 
   animation: highlight 1s ease; 
-  background: #3a3d41; 
+  background: #fff4ce; 
   padding: 4px 8px; 
   border-radius: 4px;
 }
 
 @keyframes highlight {
-  0% { background: #3a3d41; }
+  0% { background: #fff4ce; }
   100% { background: transparent; }
 }
 
@@ -1281,7 +1244,7 @@ onMounted(() => {
   left: 0; 
   right: 0; 
   bottom: 0; 
-  background: rgba(0,0,0,0.6); 
+  background: rgba(0,0,0,0.4); 
   display: flex; 
   align-items: center; 
   justify-content: center; 
@@ -1289,33 +1252,35 @@ onMounted(() => {
 }
 
 .modal-content { 
-  background: #252526; 
+  background: #ffffff; 
   padding: 24px; 
-  border-radius: 6px; 
+  border-radius: 8px; 
   width: 90%; 
   max-width: 450px;
-  border: 1px solid #3c3c3c;
+  border: 1px solid #e0e6ed;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
 }
 
 .modal-content h3 {
   margin: 0 0 16px 0;
-  color: #ffffff;
+  color: #1a1a1a;
 }
 
 .modal-content input { 
   width: 100%; 
   padding: 8px 12px; 
   margin: 8px 0; 
-  background: #3c3c3c;
-  border: 1px solid #3c3c3c; 
-  color: #cccccc;
-  border-radius: 2px; 
+  background: #ffffff;
+  border: 1px solid #e0e6ed; 
+  color: #1a1a1a;
+  border-radius: 4px; 
   box-sizing: border-box;
   outline: none;
 }
 
 .modal-content input:focus {
-  border-color: #007fd4;
+  border-color: #0078d4;
+  box-shadow: 0 0 0 2px rgba(0,120,212,0.15);
 }
 
 .path-input {
@@ -1330,7 +1295,7 @@ onMounted(() => {
 }
 
 .upload-area {
-  border: 2px dashed #3c3c3c;
+  border: 2px dashed #e0e6ed;
   border-radius: 6px;
   padding: 32px;
   text-align: center;
@@ -1340,12 +1305,13 @@ onMounted(() => {
 }
 
 .upload-area:hover {
-  border-color: #007fd4;
+  border-color: #0078d4;
+  background: #f8fafb;
 }
 
 .upload-placeholder p {
   margin: 8px 0;
-  color: #858585;
+  color: #666666;
 }
 
 .upload-placeholder p:first-child {
@@ -1354,17 +1320,17 @@ onMounted(() => {
 
 .upload-placeholder .hint {
   font-size: 12px;
-  color: #666;
+  color: #999999;
 }
 
 .upload-preview p {
   margin: 8px 0;
-  color: #cccccc;
+  color: #1a1a1a;
 }
 
 .upload-preview .hint {
   font-size: 12px;
-  color: #858585;
+  color: #999999;
 }
 
 .panel-enter-active,
@@ -1393,15 +1359,15 @@ onMounted(() => {
 
 .repo-branch {
   font-size: 12px;
-  color: #ce9178;
+  color: #ca5010;
   margin: 0 0 4px 0;
 }
 
 .branch-btn {
   padding: 6px 12px;
-  background: #3c3c3c;
-  color: #ce9178;
-  border: none;
+  background: #f5f5f5;
+  color: #ca5010;
+  border: 1px solid #e0e6ed;
   cursor: pointer;
   border-radius: 4px;
   font-size: 12px;
@@ -1409,8 +1375,8 @@ onMounted(() => {
 }
 
 .branch-btn:hover:not(:disabled) {
-  background: #505050;
-  color: #dcb67a;
+  background: #fff4ce;
+  border-color: #ca5010;
 }
 
 .branch-btn:disabled {
@@ -1422,8 +1388,8 @@ onMounted(() => {
   display: inline-block;
   width: 12px;
   height: 12px;
-  border: 2px solid #3c3c3c;
-  border-top-color: #4ec9b0;
+  border: 2px solid #e0e6ed;
+  border-top-color: #0078d4;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin-right: 6px;
@@ -1434,8 +1400,8 @@ onMounted(() => {
   display: inline-block;
   width: 10px;
   height: 10px;
-  border: 1.5px solid #3c3c3c;
-  border-top-color: #cccccc;
+  border: 1.5px solid #e0e6ed;
+  border-top-color: #0078d4;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin-right: 4px;
@@ -1457,29 +1423,29 @@ onMounted(() => {
   cursor: pointer;
   border-radius: 4px;
   transition: background 0.2s;
-  color: #cccccc;
+  color: #333333;
   font-size: 14px;
 }
 
 .branch-item:hover {
-  background: #3c3c3c;
+  background: #f0f4fa;
 }
 
 .branch-item.active {
-  background: #094771;
-  color: #4ec9b0;
+  background: #deecf9;
+  color: #0078d4;
   font-weight: 600;
 }
 
 .hint {
   font-size: 13px;
-  color: #858585;
+  color: #666666;
   margin: 8px 0;
 }
 
 .error-modal {
   text-align: center;
-  border-left: 4px solid #f48771;
+  border-left: 4px solid #d13438;
 }
 
 .error-icon {
@@ -1488,19 +1454,19 @@ onMounted(() => {
 }
 
 .error-modal h3 {
-  color: #f48771 !important;
+  color: #d13438 !important;
   margin: 0 0 12px 0 !important;
 }
 
 .error-repo {
-  color: #858585;
+  color: #666666;
   font-size: 13px;
   margin: 0 0 16px 0 !important;
 }
 
 .error-message {
-  background: #1e1e1e;
-  border: 1px solid #3c3c3c;
+  background: #f8fafb;
+  border: 1px solid #e0e6ed;
   border-radius: 4px;
   padding: 12px;
   margin: 0 0 16px 0 !important;
@@ -1510,7 +1476,7 @@ onMounted(() => {
 }
 
 .error-message p {
-  color: #cccccc;
+  color: #333333;
   font-size: 13px;
   margin: 0;
   white-space: pre-wrap;

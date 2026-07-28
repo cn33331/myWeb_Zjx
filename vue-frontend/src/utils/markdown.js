@@ -19,11 +19,9 @@ marked.setOptions({
   }
 });
 
-// 自定义 renderer 处理数学公式
-const renderer = new marked.Renderer();
-
 // 生成 slug 用于标题 ID
 function generateSlug(text) {
+  if (!text) return '';
   return text
     .toLowerCase()
     .replace(/[^\w\u4e00-\u9fff\s-]/g, '')
@@ -32,31 +30,17 @@ function generateSlug(text) {
     .replace(/^-|-$/g, '');
 }
 
-// 自定义 heading renderer，添加 id 属性
-renderer.heading = function(text, level, raw) {
-  const slug = generateSlug(raw) || `heading-${Math.random().toString(36).substr(2, 9)}`;
-  return `<h${level} id="${slug}">${text}</h${level}>\n`;
-};
-
-// 行内数学公式 $...$
-renderer.inlineMath = function(latex) {
-  try {
-    return katex.renderToString(latex, { throwOnError: false });
-  } catch (e) {
-    return `<code>${latex}</code>`;
+// marked v18 通过 token 方式扩展。这里通过 renderer 选项自定义 heading，添加 id 属性
+marked.use({
+  renderer: {
+    heading({ tokens, depth }) {
+      const rawText = tokens.map(t => t.raw || t.text || '').join('');
+      const slug = generateSlug(rawText) || `heading-${Math.random().toString(36).substr(2, 9)}`;
+      const inner = this.parser.parseInline(tokens);
+      return `<h${depth} id="${slug}">${inner}</h${depth}>\n`;
+    }
   }
-};
-
-// 块级数学公式 $$...$$
-renderer.blockMath = function(latex) {
-  try {
-    return `<div class="math-block">${katex.renderToString(latex, { throwOnError: false, displayMode: true })}</div>`;
-  } catch (e) {
-    return `<pre><code>${latex}</code></pre>`;
-  }
-};
-
-marked.use({ renderer });
+});
 
 // 预处理：处理数学公式和 Mermaid
 function preprocessMarkdown(content) {
