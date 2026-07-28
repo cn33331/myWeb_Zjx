@@ -11,6 +11,7 @@ class NoteRepository(models.Model):
     name = models.CharField(max_length=100)
     repo_type = models.CharField(max_length=20, choices=REPO_TYPE_CHOICES, default='remote')
     repo_url = models.CharField(max_length=500, blank=True)
+    branch = models.CharField(max_length=100, default='main')
     local_path = models.CharField(max_length=500)
     last_sync = models.DateTimeField(null=True, blank=True)
     sync_status = models.CharField(max_length=50, default='idle')

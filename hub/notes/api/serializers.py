@@ -5,7 +5,7 @@ from ..models import NoteRepository, NoteFile
 class NoteRepositorySerializer(serializers.ModelSerializer):
     class Meta:
         model = NoteRepository
-        fields = ['id', 'name', 'repo_type', 'repo_url', 'local_path', 'last_sync', 'sync_status', 'sync_message', 'created_at']
+        fields = ['id', 'name', 'repo_type', 'repo_url', 'branch', 'local_path', 'last_sync', 'sync_status', 'sync_message', 'created_at']
 
 
 class NoteFileSerializer(serializers.ModelSerializer):

@@ -313,3 +313,51 @@ class InitializeLocalRepoView(generics.GenericAPIView):
             'created': created,
             'local_path': local_path
         })
+
+
+class GetBranchesView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        repository_id = kwargs.get('repository_id')
+        
+        try:
+            repo = NoteRepository.objects.get(id=repository_id)
+        except NoteRepository.DoesNotExist:
+            return Response({'error': '仓库不存在'}, status=status.HTTP_404_NOT_FOUND)
+        
+        if repo.repo_type != 'remote':
+            return Response({'error': '只能获取远程仓库的分支'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not repo.repo_url:
+            return Response({'error': '仓库 URL 未设置'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        service = GitService(repo)
+        result = service.get_branches()
+        
+        return Response(result)
+
+
+class UpdateBranchView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        repository_id = kwargs.get('repository_id')
+        branch = request.data.get('branch', '')
+        
+        if not branch:
+            return Response({'error': '请提供分支名'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            repo = NoteRepository.objects.get(id=repository_id)
+        except NoteRepository.DoesNotExist:
+            return Response({'error': '仓库不存在'}, status=status.HTTP_404_NOT_FOUND)
+        
+        repo.branch = branch
+        repo.save()
+        
+        return Response({
+            'success': True,
+            'branch': branch,
+            'repository_id': repo.id
+        })

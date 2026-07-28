@@ -16,6 +16,7 @@ class GitService:
         self.repository = repository
         self.repo_url = repository.repo_url
         self.local_path = Path(repository.local_path)
+        self.branch = repository.branch or 'main'
 
     def _run_git_command(self, command, cwd=None):
         try:
@@ -53,12 +54,12 @@ class GitService:
         if self.local_path.exists():
             shutil.rmtree(str(self.local_path))
         
-        command = ['git', 'clone', self.repo_url, str(self.local_path.name)]
+        command = ['git', 'clone', '--branch', self.branch, self.repo_url, str(self.local_path.name)]
         result = self._run_git_command(command, cwd=str(self.local_path.parent))
         
         if result['success']:
             self.repository.sync_status = 'synced'
-            self.repository.sync_message = '克隆成功'
+            self.repository.sync_message = f'克隆成功 (分支: {self.branch})'
             self.repository.last_sync = timezone.now()
             self.repository.save()
         else:
@@ -72,14 +73,16 @@ class GitService:
         if not self.local_path.exists():
             return self.clone_repository()
         
-        result = self._run_git_command(['git', 'pull', 'origin', 'main'])
+        result = self._run_git_command(['git', 'fetch', 'origin'])
         
-        if not result['success']:
-            result = self._run_git_command(['git', 'pull', 'origin', 'master'])
+        if result['success']:
+            result = self._run_git_command(['git', 'pull', 'origin', self.branch])
+        else:
+            result = self._run_git_command(['git', 'pull', 'origin', self.branch])
         
         if result['success']:
             self.repository.sync_status = 'synced'
-            self.repository.sync_message = result['stdout'] or '拉取成功'
+            self.repository.sync_message = result['stdout'] or f'拉取成功 (分支: {self.branch})'
             self.repository.last_sync = timezone.now()
             self.repository.save()
         else:
@@ -88,6 +91,32 @@ class GitService:
             self.repository.save()
         
         return result
+
+    def get_branches(self):
+        result = self._run_git_command(['git', 'ls-remote', '--heads', self.repo_url])
+        
+        if not result['success']:
+            result = self._run_git_command(['git', 'ls-remote', self.repo_url])
+        
+        branches = []
+        if result['success']:
+            for line in result['stdout'].split('\n'):
+                if line.strip():
+                    parts = line.strip().split()
+                    if len(parts) >= 2:
+                        ref = parts[1]
+                        if ref.startswith('refs/heads/'):
+                            branch_name = ref.replace('refs/heads/', '')
+                            branches.append(branch_name)
+        
+        if not branches:
+            branches = ['main', 'master']
+        
+        return {
+            'success': result['success'],
+            'branches': branches,
+            'message': result['stderr'] if not result['success'] else None
+        }
 
     def get_git_status(self):
         result = self._run_git_command(['git', 'log', '--oneline', '-1'])

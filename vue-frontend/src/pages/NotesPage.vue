@@ -46,12 +46,16 @@
                 <h3>{{ repo.name }}</h3>
                 <p class="repo-type-badge remote-badge">远程仓库</p>
                 <p class="repo-url">{{ repo.repo_url }}</p>
+                <p class="repo-branch">🌿 分支: {{ repo.branch || 'main' }}</p>
                 <p class="repo-status" :class="repo.sync_status">
                   {{ repo.sync_status === 'synced' ? '✓ 已同步' : repo.sync_status === 'failed' ? '✗ 同步失败' : '○ 未同步' }}
                 </p>
                 <p v-if="repo.last_sync" class="repo-time">最后同步: {{ formatTime(repo.last_sync) }}</p>
               </div>
-              <button @click.stop="syncRepo(repo.id)" class="sync-btn">同步</button>
+              <div class="repo-actions">
+                <button @click.stop="showBranchSelector(repo)" class="branch-btn">🌿 {{ repo.branch || 'main' }}</button>
+                <button @click.stop="syncRepo(repo.id)" class="sync-btn">同步</button>
+              </div>
             </div>
           </div>
         </div>
@@ -262,6 +266,29 @@
         </div>
       </div>
     </div>
+
+    <div v-if="showBranchModal" class="modal" @click.self="showBranchModal = false">
+      <div class="modal-content">
+        <h3>选择分支</h3>
+        <p v-if="branchLoading">正在获取分支列表...</p>
+        <div v-else-if="availableBranches.length > 0" class="branch-list">
+          <div 
+            v-for="branch in availableBranches" 
+            :key="branch" 
+            class="branch-item"
+            :class="{ active: branch === currentBranch }"
+            @click="selectBranch(branch)"
+          >
+            🌿 {{ branch }}
+          </div>
+        </div>
+        <p v-else class="hint">未找到可用分支</p>
+        <div class="modal-actions">
+          <button @click="fetchBranches" class="btn">🔄 刷新分支</button>
+          <button @click="showBranchModal = false" class="btn">关闭</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -281,6 +308,7 @@ const fileTree = ref([]);
 const searchQuery = ref('');
 const showAddModal = ref(false);
 const showUploadModal = ref(false);
+const showBranchModal = ref(false);
 const repoUrl = ref('');
 const localPath = ref('');
 const uploadFile = ref(null);
@@ -289,6 +317,9 @@ const uploadingRepoId = ref(null);
 const expandedDirs = ref(new Set());
 const leftPanelOpen = ref(true);
 const rightPanelOpen = ref(true);
+const currentBranch = ref('main');
+const availableBranches = ref([]);
+const branchLoading = ref(false);
 
 const isLoggedIn = computed(() => authStore.isAuthenticated);
 
@@ -496,6 +527,59 @@ const deleteNote = async (note) => {
       console.error('删除失败:', e);
       alert('删除失败: ' + (e.response?.data?.error || e.message));
     }
+  }
+};
+
+const showBranchSelector = async (repo) => {
+  selectedRepo.value = repo;
+  currentBranch.value = repo.branch || 'main';
+  showBranchModal.value = true;
+  await fetchBranches();
+};
+
+const fetchBranches = async () => {
+  if (!selectedRepo.value) return;
+  
+  branchLoading.value = true;
+  try {
+    const res = await axios.get(`/api/notes/repositories/${selectedRepo.value.id}/branches/`);
+    if (res.data.success && res.data.branches) {
+      availableBranches.value = res.data.branches;
+    } else {
+      availableBranches.value = ['main', 'master'];
+    }
+  } catch (e) {
+    console.error('获取分支失败:', e);
+    availableBranches.value = ['main', 'master'];
+  } finally {
+    branchLoading.value = false;
+  }
+};
+
+const selectBranch = async (branch) => {
+  if (!selectedRepo.value) return;
+  
+  try {
+    const res = await axios.post(`/api/notes/repositories/${selectedRepo.value.id}/update-branch/`, {
+      branch: branch
+    });
+    
+    if (res.data.success) {
+      currentBranch.value = branch;
+      repo = selectedRepo.value;
+      repo.branch = branch;
+      
+      const index = repos.value.findIndex(r => r.id === repo.id);
+      if (index !== -1) {
+        repos.value[index] = { ...repo, branch: branch };
+      }
+      
+      showBranchModal.value = false;
+      alert(`分支已切换到: ${branch}\n请点击同步以拉取该分支的内容`);
+    }
+  } catch (e) {
+    console.error('更新分支失败:', e);
+    alert('更新分支失败: ' + (e.response?.data?.error || e.message));
   }
 };
 
@@ -1226,5 +1310,58 @@ onMounted(() => {
 .panel-right-leave-to {
   width: 0;
   opacity: 0;
+}
+
+.repo-branch {
+  font-size: 12px;
+  color: #ce9178;
+  margin: 0 0 4px 0;
+}
+
+.branch-btn {
+  padding: 6px 12px;
+  background: #3c3c3c;
+  color: #ce9178;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.branch-btn:hover {
+  background: #505050;
+  color: #dcb67a;
+}
+
+.branch-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin: 12px 0;
+}
+
+.branch-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+  color: #cccccc;
+  font-size: 14px;
+}
+
+.branch-item:hover {
+  background: #3c3c3c;
+}
+
+.branch-item.active {
+  background: #094771;
+  color: #4ec9b0;
+  font-weight: 600;
+}
+
+.hint {
+  font-size: 13px;
+  color: #858585;
+  margin: 8px 0;
 }
 </style>
