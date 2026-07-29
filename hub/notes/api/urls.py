@@ -12,7 +12,9 @@ from .views import (
     DeleteNoteView,
     InitializeLocalRepoView,
     GetBranchesView,
-    UpdateBranchView
+    UpdateBranchView,
+    DownloadFileView,
+    DownloadRepoView
 )
 
 urlpatterns = [
@@ -29,4 +31,6 @@ urlpatterns = [
     path('init-local-repo/', InitializeLocalRepoView.as_view(), name='init-local-repo'),
     path('repositories/<int:repository_id>/branches/', GetBranchesView.as_view(), name='get-branches'),
     path('repositories/<int:repository_id>/update-branch/', UpdateBranchView.as_view(), name='update-branch'),
+    path('repositories/<int:repository_id>/download-file/<path:file_path>/', DownloadFileView.as_view(), name='download-file'),
+    path('repositories/<int:repository_id>/download-repo/', DownloadRepoView.as_view(), name='download-repo'),
 ]

@@ -27,6 +27,14 @@
                 <button @click.stop="uploadNote(repo.id)" class="action-btn upload" :disabled="!isLoggedIn">
                   {{ isLoggedIn ? '上传' : '登录' }}
                 </button>
+                <button 
+                  @click.stop="downloadRepo(repo)" 
+                  class="action-btn download" 
+                  :disabled="!isLoggedIn"
+                  title="下载整个仓库"
+                >
+                  📦 下载全部
+                </button>
               </div>
             </div>
           </div>
@@ -135,6 +143,12 @@
                   <span class="file-name">{{ item.name }}</span>
                   <span 
                     v-if="selectedRepo.repo_type === 'local' && isLoggedIn" 
+                    class="download-icon"
+                    @click.stop="downloadFile(item)"
+                    title="下载"
+                  >⬇</span>
+                  <span 
+                    v-if="selectedRepo.repo_type === 'local' && isLoggedIn" 
                     class="delete-icon"
                     @click.stop="deleteNote(item)"
                     title="删除"
@@ -162,6 +176,12 @@
                           <span class="file-name">{{ child.name }}</span>
                           <span 
                             v-if="selectedRepo.repo_type === 'local' && isLoggedIn" 
+                            class="download-icon"
+                            @click.stop="downloadFile(child)"
+                            title="下载"
+                          >⬇</span>
+                          <span 
+                            v-if="selectedRepo.repo_type === 'local' && isLoggedIn" 
                             class="delete-icon"
                             @click.stop="deleteNote(child)"
                             title="删除"
@@ -187,6 +207,12 @@
                             >
                               <span class="file-icon">📄</span>
                               <span class="file-name">{{ sub.name }}</span>
+                              <span 
+                                v-if="selectedRepo.repo_type === 'local' && isLoggedIn" 
+                                class="download-icon"
+                                @click.stop="downloadFile(sub)"
+                                title="下载"
+                              >⬇</span>
                               <span 
                                 v-if="selectedRepo.repo_type === 'local' && isLoggedIn" 
                                 class="delete-icon"
@@ -217,6 +243,11 @@
             <div class="note-meta">
               <span>{{ formatTime(currentNote.last_modified) }}</span>
               <span>{{ formatSize(currentNote.size) }}</span>
+              <span v-if="selectedRepo.repo_type === 'local' && isLoggedIn" 
+                    class="download-link" 
+                    @click="downloadFile(currentNote)">
+                ⬇ 下载
+              </span>
               <span v-if="selectedRepo.repo_type === 'local' && isLoggedIn" 
                     class="delete-link" 
                     @click="deleteNote(currentNote)">
@@ -624,6 +655,74 @@ const deleteNote = async (note) => {
   }
 };
 
+const downloadFile = async (note) => {
+  if (!isLoggedIn.value) {
+    alert('请先登录后再下载文件');
+    window.location.href = '/login';
+    return;
+  }
+  
+  try {
+    const repoId = selectedRepo.value?.id;
+    const filePath = note.file_path;
+    const response = await axios.get(`/api/notes/repositories/${repoId}/download-file/${encodeURIComponent(filePath)}/`, {
+      responseType: 'blob'
+    });
+    
+    // 创建下载链接
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = note.file_name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (e) {
+    if (e.response?.status === 401) {
+      alert('登录已过期，请重新登录！');
+      authStore.clearTokens();
+      window.location.href = '/login';
+    } else {
+      console.error('下载失败:', e);
+      alert('下载失败: ' + (e.response?.data?.error || e.message));
+    }
+  }
+};
+
+const downloadRepo = async (repo) => {
+  if (!isLoggedIn.value) {
+    alert('请先登录后再下载');
+    window.location.href = '/login';
+    return;
+  }
+  
+  try {
+    const response = await axios.get(`/api/notes/repositories/${repo.id}/download-repo/`, {
+      responseType: 'blob'
+    });
+    
+    // 创建下载链接
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${repo.name}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (e) {
+    if (e.response?.status === 401) {
+      alert('登录已过期，请重新登录！');
+      authStore.clearTokens();
+      window.location.href = '/login';
+    } else {
+      console.error('下载失败:', e);
+      alert('下载失败: ' + (e.response?.data?.error || e.message));
+    }
+  }
+};
+
 const showBranchSelector = async (repo) => {
   if (!isLoggedIn.value) {
     alert('请先登录后再切换分支！');
@@ -809,6 +908,13 @@ onMounted(() => {
   color: #fff;
 }
 .action-btn.upload:hover { background: #106ebe; }
+
+.action-btn.download {
+  background: #107c10;
+  color: #fff;
+}
+.action-btn.download:hover { background: #0b6b0f; }
+
 .action-btn:disabled {
   background: #e0e6ed;
   color: #999999;
@@ -1043,12 +1149,26 @@ onMounted(() => {
   transition: opacity 0.2s;
 }
 
-.tree-item-file:hover .delete-icon {
+.download-icon {
+  opacity: 0;
+  color: #0078d4;
+  font-size: 12px;
+  width: 16px;
+  text-align: center;
+  transition: opacity 0.2s;
+}
+
+.tree-item-file:hover .delete-icon,
+.tree-item-file:hover .download-icon {
   opacity: 1;
 }
 
 .delete-icon:hover {
   color: #a4262c;
+}
+
+.download-icon:hover {
+  color: #106ebe;
 }
 
 .tree-item-dir { 
@@ -1133,6 +1253,16 @@ onMounted(() => {
   font-size: 12px; 
   color: #666666;
   align-items: center;
+}
+
+.download-link {
+  color: #0078d4;
+  cursor: pointer;
+}
+
+.download-link:hover {
+  color: #106ebe;
+  text-decoration: underline;
 }
 
 .delete-link {

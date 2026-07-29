@@ -1,5 +1,8 @@
 import os
+import zipfile
+import tempfile
 from pathlib import Path
+from django.http import HttpResponse, FileResponse
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.response import Response
@@ -361,3 +364,81 @@ class UpdateBranchView(generics.GenericAPIView):
             'branch': branch,
             'repository_id': repo.id
         })
+
+
+class DownloadFileView(generics.GenericAPIView):
+    """下载单个文件"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        repository_id = kwargs.get('repository_id')
+        file_path = kwargs.get('file_path')
+        
+        try:
+            repo = NoteRepository.objects.get(id=repository_id)
+        except NoteRepository.DoesNotExist:
+            return Response({'error': '仓库不存在'}, status=status.HTTP_404_NOT_FOUND)
+        
+        if repo.repo_type != 'local':
+            return Response({'error': '只能下载本地仓库的文件'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        full_path = os.path.join(repo.local_path, file_path)
+        full_path = os.path.normpath(full_path)
+        local_path_norm = os.path.normpath(repo.local_path)
+        
+        if not full_path.startswith(local_path_norm):
+            return Response({'error': '非法路径'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not os.path.isfile(full_path):
+            return Response({'error': '文件不存在'}, status=status.HTTP_404_NOT_FOUND)
+        
+        with open(full_path, 'rb') as f:
+            response = HttpResponse(f.read(), content_type='application/octet-stream')
+            response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+            return response
+
+
+class DownloadRepoView(generics.GenericAPIView):
+    """打包下载整个本地仓库为 zip"""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        repository_id = kwargs.get('repository_id')
+        
+        try:
+            repo = NoteRepository.objects.get(id=repository_id)
+        except NoteRepository.DoesNotExist:
+            return Response({'error': '仓库不存在'}, status=status.HTTP_404_NOT_FOUND)
+        
+        if repo.repo_type != 'local':
+            return Response({'error': '只能下载本地仓库'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        local_path = repo.local_path
+        if not os.path.isdir(local_path):
+            return Response({'error': '仓库目录不存在'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # 创建临时 zip 文件
+        temp_zip = tempfile.NamedTemporaryFile(delete=False, suffix='.zip')
+        temp_zip_path = temp_zip.name
+        
+        try:
+            with zipfile.ZipFile(temp_zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for root, dirs, files in os.walk(local_path):
+                    for file in files:
+                        file_full_path = os.path.join(root, file)
+                        arcname = os.path.relpath(file_full_path, local_path)
+                        zipf.write(file_full_path, arcname)
+            
+            # 读取 zip 并返回
+            with open(temp_zip_path, 'rb') as f:
+                zip_data = f.read()
+            
+            response = HttpResponse(zip_data, content_type='application/zip')
+            response['Content-Disposition'] = f'attachment; filename="{repo.name}.zip"'
+            
+            return response
+            
+        finally:
+            # 清理临时文件
+            if os.path.exists(temp_zip_path):
+                os.unlink(temp_zip_path)

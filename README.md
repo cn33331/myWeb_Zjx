@@ -98,10 +98,13 @@ web/
 - 工具详情查看
 
 ### 笔记管理（notes）
-- 从 Gitee 私有仓库拉取 Obsidian 笔记到本地指定目录（如 `/tmp/my-notes`）
-- 笔记仓库管理（添加、同步、删除）
-- 笔记列表展示与搜索
-- Markdown 内容预览（标题、列表、代码块等格式）
+- 支持本地仓库和远程仓库两种类型
+- 远程仓库：从 Gitee/GitHub 拉取笔记，支持分支选择和同步
+- 本地仓库：支持文件上传、删除、下载（需登录）
+- 打包下载整个本地仓库为 zip（需登录）
+- 笔记列表展示与搜索，VSCode 风格文件树导航
+- Markdown 渲染（marked + highlight.js + KaTeX 数学公式 + Mermaid 图表）
+- 笔记目录（TOC）自动生成与跳转
 
 ### 临时中转站（transfer）
 - 快速导航至 AirPortal 空投和文叔叔文件传输网站
@@ -124,11 +127,20 @@ web/
 | 中转站 | `/api/transfer/records/<id>/` | GET | 传输记录详情 | 公开 |
 | 中转站 | `/api/transfer/records/<id>/` | PUT | 更新传输记录 | 公开 |
 | 中转站 | `/api/transfer/records/<id>/` | DELETE | 删除传输记录 | 公开 |
-| 笔记 | `/api/notes/repositories/` | GET | 获取仓库列表 | 公开 |
+| 笔记 | `/api/notes/repositories/` | GET | 获取仓库列表（本地+远程） | 公开 |
 | 笔记 | `/api/notes/repositories/` | POST | 添加笔记仓库 | 公开 |
-| 笔记 | `/api/notes/repositories/<id>/sync/` | POST | 同步笔记仓库 | 公开 |
-| 笔记 | `/api/notes/repositories/<id>/notes/` | GET | 获取笔记列表（返回全部，不分页） | 公开 |
-| 笔记 | `/api/notes/repositories/<id>/notes/<path>/` | GET | 获取笔记内容 | 公开 |
+| 笔记 | `/api/notes/repositories/<id>/` | GET/PUT/DELETE | 仓库详情/更新/删除 | 公开 |
+| 笔记 | `/api/notes/repositories/<id>/sync/` | POST | 同步远程仓库 | 公开 |
+| 笔记 | `/api/notes/repositories/<id>/file-tree/` | GET | 获取文件树结构 | 公开 |
+| 笔记 | `/api/notes/repositories/<id>/note/<path>/` | GET | 获取笔记内容与目录 | 公开 |
+| 笔记 | `/api/notes/repositories/<id>/notes/` | GET | 获取笔记列表（不分页） | 公开 |
+| 笔记 | `/api/notes/repositories/<id>/branches/` | GET | 获取远程仓库分支列表 | 公开 |
+| 笔记 | `/api/notes/repositories/<id>/update-branch/` | POST | 切换仓库分支 | 公开 |
+| 笔记 | `/api/notes/repositories/<id>/upload/` | POST | 上传文件到本地仓库 | 需登录 |
+| 笔记 | `/api/notes/repositories/<id>/delete/` | POST | 删除本地仓库文件 | 需登录 |
+| 笔记 | `/api/notes/repositories/<id>/download-file/<path>/` | GET | 下载单个文件 | 需登录 |
+| 笔记 | `/api/notes/repositories/<id>/download-repo/` | GET | 打包下载整个仓库 | 需登录 |
+| 笔记 | `/api/notes/init-local-repo/` | POST | 初始化本地仓库 | 公开 |
 
 ## 前端路由
 
