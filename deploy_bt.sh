@@ -148,8 +148,21 @@ print('管理员账号创建成功:', user.username)
     cd "$SCRIPT_DIR"
 }
 
+detect_nginx() {
+    NGINX_BIN=""
+    if command -v nginx &> /dev/null; then
+        NGINX_BIN="nginx"
+    elif [ -f "/www/server/nginx/sbin/nginx" ]; then
+        NGINX_BIN="/www/server/nginx/sbin/nginx"
+    else
+        log_warn "未找到 nginx 可执行文件，请确认 Nginx 已安装"
+    fi
+}
+
 generate_nginx_config() {
     log_info "生成 Nginx 配置..."
+    
+    detect_nginx
     
     read -p "请输入服务器公网IP: " SERVER_IP
     read -p "请输入站点域名(可选): " SITE_DOMAIN
@@ -172,9 +185,9 @@ generate_nginx_config() {
     fi
     
     NGINX_CONF="server {
-    listen 80;
+    listen 80 default_server;
     listen [::]:80;
-    server_name $SERVER_IP $SITE_DOMAIN localhost;
+    server_name $SERVER_IP $SITE_DOMAIN localhost 127.0.0.1 _;
 
     charset utf-8;
     client_max_body_size 50M;
@@ -226,20 +239,27 @@ $ADMIN_ACCESS_RULES
     echo "$NGINX_CONF" > "$NGINX_VHOST_CONF"
     log_info "Nginx 配置已写入: $NGINX_VHOST_CONF"
     
-    if nginx -t 2>&1 | grep -q "test is successful"; then
-        log_info "Nginx 配置语法检查通过"
-        log_info "请手动执行以下命令以应用配置："
-        echo
-        echo "  # 1. 重启 Gunicorn 服务"
-        echo "  systemctl restart hub"
-        echo
-        echo "  # 2. 重载 Nginx 配置"
-        echo "  /www/server/nginx/sbin/nginx -t && /www/server/nginx/sbin/nginx -s reload"
-        echo
-    else
-        log_error "Nginx 配置语法检查失败，请检查配置文件"
-        nginx -t
+    if [ -n "$NGINX_BIN" ]; then
+        if $NGINX_BIN -t 2>&1 | grep -q "test is successful"; then
+            log_info "Nginx 配置语法检查通过"
+        else
+            log_error "Nginx 配置语法检查失败，请检查配置文件"
+            $NGINX_BIN -t
+        fi
     fi
+    
+    log_info "请手动执行以下命令以应用配置："
+    echo
+    echo "  # 1. 重启 Gunicorn 服务"
+    echo "  systemctl restart hub"
+    echo
+    echo "  # 2. 重载 Nginx 配置"
+    if [ -n "$NGINX_BIN" ]; then
+        echo "  $NGINX_BIN -t && $NGINX_BIN -s reload"
+    else
+        echo "  /www/server/nginx/sbin/nginx -t && /www/server/nginx/sbin/nginx -s reload"
+    fi
+    echo
 }
 
 show_deploy_info() {
