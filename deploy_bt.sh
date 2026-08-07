@@ -190,7 +190,7 @@ generate_nginx_config() {
     server_name $SERVER_IP $SITE_DOMAIN localhost 127.0.0.1 _;
 
     charset utf-8;
-    client_max_body_size 50M;
+    client_max_body_size 500M;
 
     location /static/ {
         root $PROJECT_DIR;
