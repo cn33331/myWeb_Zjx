@@ -32,4 +32,9 @@ class ToolDownloadView(generics.GenericAPIView):
         tool = self.get_object()
         tool.downloads += 1
         tool.save()
-        return FileResponse(tool.file.open(), as_attachment=True)
+        filename = tool.file.name.split('/')[-1]
+        return FileResponse(
+            tool.file.open(mode='rb'),
+            as_attachment=True,
+            filename=filename,
+        )

@@ -39,21 +39,7 @@ export const useStoreStore = defineStore('store', () => {
   }
 
   const handleDownload = async (id) => {
-    const res = await downloadTool(id)
-    const contentDisposition = res.headers['content-disposition']
-    let filename = `tool_${id}.zip`
-    if (contentDisposition) {
-      const match = contentDisposition.match(/filename=(.+)/)
-      if (match) filename = match[1]
-    }
-    const url = window.URL.createObjectURL(new Blob([res.data]))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    window.URL.revokeObjectURL(url)
-    document.body.removeChild(a)
+    downloadTool(id)
     await fetchTools()
   }
 
