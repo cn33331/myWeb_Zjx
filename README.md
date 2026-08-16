@@ -1,14 +1,33 @@
 # Hub - 多功能 Web 平台
 
-基于 Django + Vue 3 的web平台，采用前后端分离架构。平台包含应用仓库、中转站、管理后台等功能。
+基于 Django + Vue 3 的前后端分离 Web 平台，集成应用仓库、笔记管理、文件中转站等功能模块。
+
+## 快速开始
+
+```bash
+git clone https://github.com/cn33331/myWeb_Zjx.git web
+cd web
+
+# macOS 一键启动前后端开发服务
+chmod +x 启动服务.command
+./启动服务.command
+```
+
+启动后访问：
+
+| 服务 | 地址 |
+| --- | --- |
+| 前端开发服务器 | http://localhost:5173/ |
+| Django 后端 | http://localhost:8000/ |
+| Django 管理后台 | http://localhost:8000/admin |
 
 ## 平台模块
 
 | 模块 | 路径前缀 | 应用 | 说明 |
 | --- | --- | --- | --- |
-| 首页入口 | `/` | `home` | 展示平台入口 |
+| 首页入口 | `/` | `home` | 展示平台各功能模块入口卡片 |
 | 应用仓库 | `/store/` | `store` | 工具的上传、下载与详情查看 |
-| 笔记管理 | `/notes/` | `notes` | 从 Gitee 拉取 Obsidian 笔记并展示 |
+| 笔记管理 | `/notes/` | `notes` | 从 Gitee/GitHub 拉取 Obsidian 笔记并展示 |
 | 中转站 | `/transfer/` | `transfer` | 文件传输导航与记录管理 |
 | 管理后台 | `/admin/` | Django Admin | 站点管理 |
 | API 接口 | `/api/` | DRF | RESTful API 服务 |
@@ -16,88 +35,94 @@
 ## 架构总览
 
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                        前端层                                    │
-│  Vue 3 + Vite + Pinia + Axios                                    │
-│  /vue-frontend/                                                  │
-│  ├── src/pages/       # 页面组件（Home/Store/Auth）               │
-│  ├── src/components/  # 通用组件（ToolCard/Header）               │
-│  ├── src/api/         # API请求封装                              │
-│  └── src/stores/      # Pinia状态管理                            │
-└───────────────────────────┬──────────────────────────────────────┘
-                            │ HTTP (Axios + JWT)
-                            ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                        后端层                                    │
-│  Django + Django REST Framework + SimpleJWT                      │
-│  /hub/                                                           │
-│  ├── hub/settings.py  # CORS、REST Framework、JWT 配置           │
-│  ├── hub/auth_*.py    # 认证模块（登录/注册/Token刷新）          │
-│  ├── store/api/       # 仓库模块 API                             │
-│  └── notes/           # 笔记模块（Git同步、Markdown展示）        │
-└───────────────────────────┬──────────────────────────────────────┘
-                            │ Gunicorn / runserver
-                            ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                        部署层                                    │
-│  Nginx 反向代理                                                  │
-│  - 静态资源：/ → Vue dist                                        │
-│  - API转发：  /api/ → Django (127.0.0.1:8000)                    │
-│  - 媒体文件： /media/ → Django MEDIA_ROOT                        │
-│  - 管理后台： /admin/ → Django Admin                              │
-└──────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────┐
+│  前端层 — Vue 3 + Vite + Pinia + Axios                  │
+│  /vue-frontend/                                         │
+│  ├── src/pages/        页面组件（Home/Store/Auth）       │
+│  ├── src/components/   通用组件（ToolCard/Header）       │
+│  ├── src/api/          API 请求封装                      │
+│  └── src/stores/       Pinia 状态管理                    │
+└──────────────────────────┬──────────────────────────────┘
+                           │ HTTP (Axios + JWT)
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│  后端层 — Django + DRF + SimpleJWT                      │
+│  /hub/                                                  │
+│  ├── hub/settings.py    CORS / DRF / JWT 配置            │
+│  ├── hub/auth_*.py      认证模块（登录/注册/Token刷新）  │
+│  ├── store/api/         仓库模块 API                     │
+│  └── notes/             笔记模块（Git同步/Markdown展示） │
+└──────────────────────────┬──────────────────────────────┘
+                           │ Gunicorn / runserver
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│  部署层 — Nginx 反向代理                                │
+│  静态资源  /        → Vue dist                          │
+│  API 转发  /api/    → Django (127.0.0.1:8000)           │
+│  媒体文件  /media/  → Django MEDIA_ROOT                 │
+│  管理后台  /admin/  → Django Admin（可配 IP 白名单）     │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ## 项目结构
 
 ```
 web/
-├── hub/                      # Django 后端项目
+├── hub/                         # Django 后端项目
 │   ├── manage.py
-│   ├── hub/                  # 项目配置
-│   │   ├── settings.py       # Django + DRF + JWT + CORS 配置
-│   │   ├── urls.py           # 根路由（含 /api/ 入口）
-│   │   ├── api_urls.py       # API 路由聚合
-│   │   ├── auth_views.py     # 登录/注册视图
+│   ├── db.sqlite3               # SQLite 数据库文件
+│   ├── hub/                     # 项目配置
+│   │   ├── settings.py          # Django + DRF + JWT + CORS 配置
+│   │   ├── urls.py              # 根路由（含 /api/ 入口）
+│   │   ├── api_urls.py          # API 路由聚合
+│   │   ├── auth_views.py        # 登录/注册视图
 │   │   ├── auth_serializers.py
 │   │   └── auth_urls.py
-│   ├── home/                 # 首页入口应用
-  │   ├── store/                # 应用仓库模块
-  │   ├── notes/                # 笔记管理模块（Git同步、Markdown展示）
-  │   └── transfer/             # 中转站模块（传输记录管理）
-│       ├── models.py
-│       ├── api/              # REST API（serializers/views/urls）
-│       └── templates/store/
-├── vue-frontend/             # Vue 3 前端项目
+│   ├── home/                    # 首页入口应用
+│   ├── store/                   # 应用仓库模块
+│   │   ├── models.py
+│   │   ├── api/                 # REST API（serializers/views/urls）
+│   │   └── templates/store/
+│   ├── notes/                   # 笔记管理模块（Git同步、Markdown展示）
+│   ├── transfer/                # 中转站模块（传输记录管理）
+│   ├── static/                  # 收集的静态文件
+│   └── media/                   # 用户上传文件
+├── vue-frontend/                # Vue 3 前端项目
 │   ├── src/
-│   │   ├── api/              # axios 封装（index/store/auth）
-│   │   ├── components/       # 通用组件（Header/ToolCard/Loading）
-│   │   ├── pages/            # 页面组件
-│   │   ├── stores/           # Pinia 状态管理（auth/store）
-│   │   ├── router/           # 路由配置与导航守卫
+│   │   ├── api/                 # axios 封装（index/store/auth）
+│   │   ├── components/          # 通用组件（Header/ToolCard/Loading）
+│   │   ├── pages/               # 页面组件
+│   │   ├── stores/              # Pinia 状态管理（auth/store）
+│   │   ├── router/              # 路由配置与导航守卫
+│   │   ├── utils/               # 工具函数
 │   │   ├── App.vue
 │   │   └── main.js
-│   ├── .env.development      # 开发环境 API 地址
-│   ├── .env.production       # 生产环境 API 地址
-│   └── vite.config.js        # Vite 配置（代理、别名）
-├── requirements.txt          # Python 依赖
-├── start.sh                  # 启动脚本（支持开发/生产模式）
-├── deploy_bt.sh              # 宝塔面板部署脚本
-└── 启动服务.command           # macOS 双击启动
+│   ├── .env.development         # 开发环境 API 地址
+│   ├── .env.production          # 生产环境 API 地址
+│   └── vite.config.js           # Vite 配置（代理、别名）
+├── nginx/                       # Nginx 配置
+│   └── conf/nginx.conf          # 本地开发用 Nginx 配置（端口 8080）
+├── requirements.txt             # Python 依赖
+├── deploy_bt.sh                 # 宝塔面板生产部署脚本（交互式）
+├── update.sh                    # 代码更新脚本（非交互式）
+└── 启动服务.command              # macOS 双击启动开发环境
 ```
 
 ## 功能说明
 
 ### 首页（home）
+
 - 根路径 `/` 展示平台各功能模块入口卡片
 
 ### 应用仓库（store）
+
 - 工具列表展示与搜索
 - 工具上传管理（管理员）
 - 工具下载（带下载次数统计）
 - 工具详情查看
 
 ### 笔记管理（notes）
+
 - 支持本地仓库和远程仓库两种类型
 - 远程仓库：从 Gitee/GitHub 拉取笔记，支持分支选择和同步
 - 本地仓库：支持文件上传、删除、下载（需登录）
@@ -107,45 +132,59 @@ web/
 - 笔记目录（TOC）自动生成与跳转
 
 ### 临时中转站（transfer）
+
 - 快速导航至 AirPortal 空投和文叔叔文件传输网站
 - 记录文件传输信息（取件码、取件链接、文件名、文件大小）
 - 传输记录的添加、查看与删除
 
 ## API 接口总览
 
-| 模块 | API 路径 | 方法 | 说明 | 认证 |
-|------|---------|------|------|------|
-| 认证 | `/api/auth/login/` | POST | 用户登录 | 公开 |
-| 认证 | `/api/auth/refresh/` | POST | Token 刷新 | 需 refresh_token |
-| 仓库 | `/api/store/tools/` | GET | 工具列表 | 公开 |
-| 仓库 | `/api/store/tools/` | POST | 上传工具 | 管理员 |
-| 仓库 | `/api/store/tools/<id>/` | GET | 工具详情 | 公开 |
-| 仓库 | `/api/store/tools/<id>/` | DELETE | 删除工具 | 管理员 |
-| 仓库 | `/api/store/tools/<id>/download/` | GET | 工具下载 | 公开 |
-| 中转站 | `/api/transfer/records/` | GET | 传输记录列表 | 公开 |
-| 中转站 | `/api/transfer/records/` | POST | 添加传输记录 | 公开 |
-| 中转站 | `/api/transfer/records/<id>/` | GET | 传输记录详情 | 公开 |
-| 中转站 | `/api/transfer/records/<id>/` | PUT | 更新传输记录 | 公开 |
-| 中转站 | `/api/transfer/records/<id>/` | DELETE | 删除传输记录 | 公开 |
-| 笔记 | `/api/notes/repositories/` | GET | 获取仓库列表（本地+远程） | 公开 |
-| 笔记 | `/api/notes/repositories/` | POST | 添加笔记仓库 | 公开 |
-| 笔记 | `/api/notes/repositories/<id>/` | GET/PUT/DELETE | 仓库详情/更新/删除 | 公开 |
-| 笔记 | `/api/notes/repositories/<id>/sync/` | POST | 同步远程仓库 | 公开 |
-| 笔记 | `/api/notes/repositories/<id>/file-tree/` | GET | 获取文件树结构 | 公开 |
-| 笔记 | `/api/notes/repositories/<id>/note/<path>/` | GET | 获取笔记内容与目录 | 公开 |
-| 笔记 | `/api/notes/repositories/<id>/notes/` | GET | 获取笔记列表（不分页） | 公开 |
-| 笔记 | `/api/notes/repositories/<id>/branches/` | GET | 获取远程仓库分支列表 | 公开 |
-| 笔记 | `/api/notes/repositories/<id>/update-branch/` | POST | 切换仓库分支 | 公开 |
-| 笔记 | `/api/notes/repositories/<id>/upload/` | POST | 上传文件到本地仓库 | 需登录 |
-| 笔记 | `/api/notes/repositories/<id>/delete/` | POST | 删除本地仓库文件 | 需登录 |
-| 笔记 | `/api/notes/repositories/<id>/download-file/<path>/` | GET | 下载单个文件 | 需登录 |
-| 笔记 | `/api/notes/repositories/<id>/download-repo/` | GET | 打包下载整个仓库 | 需登录 |
-| 笔记 | `/api/notes/init-local-repo/` | POST | 初始化本地仓库 | 公开 |
+### 认证
+
+| API 路径 | 方法 | 说明 | 认证 |
+| --- | --- | --- | --- |
+| `/api/auth/login/` | POST | 用户登录 | 公开 |
+| `/api/auth/refresh/` | POST | Token 刷新 | 需 refresh_token |
+
+### 应用仓库
+
+| API 路径 | 方法 | 说明 | 认证 |
+| --- | --- | --- | --- |
+| `/api/store/tools/` | GET | 工具列表 | 公开 |
+| `/api/store/tools/` | POST | 上传工具 | 管理员 |
+| `/api/store/tools/<id>/` | GET | 工具详情 | 公开 |
+| `/api/store/tools/<id>/` | DELETE | 删除工具 | 管理员 |
+| `/api/store/tools/<id>/download/` | GET | 工具下载 | 公开 |
+
+### 中转站
+
+| API 路径 | 方法 | 说明 | 认证 |
+| --- | --- | --- | --- |
+| `/api/transfer/records/` | GET / POST | 传输记录列表 / 添加记录 | 公开 |
+| `/api/transfer/records/<id>/` | GET / PUT / DELETE | 记录详情 / 更新 / 删除 | 公开 |
+
+### 笔记
+
+| API 路径 | 方法 | 说明 | 认证 |
+| --- | --- | --- | --- |
+| `/api/notes/repositories/` | GET / POST | 仓库列表 / 添加仓库 | 公开 |
+| `/api/notes/repositories/<id>/` | GET / PUT / DELETE | 仓库详情 / 更新 / 删除 | 公开 |
+| `/api/notes/repositories/<id>/sync/` | POST | 同步远程仓库 | 公开 |
+| `/api/notes/repositories/<id>/file-tree/` | GET | 获取文件树结构 | 公开 |
+| `/api/notes/repositories/<id>/note/<path>/` | GET | 获取笔记内容与目录 | 公开 |
+| `/api/notes/repositories/<id>/notes/` | GET | 获取笔记列表（不分页） | 公开 |
+| `/api/notes/repositories/<id>/branches/` | GET | 获取远程仓库分支列表 | 公开 |
+| `/api/notes/repositories/<id>/update-branch/` | POST | 切换仓库分支 | 公开 |
+| `/api/notes/repositories/<id>/upload/` | POST | 上传文件到本地仓库 | 需登录 |
+| `/api/notes/repositories/<id>/delete/` | POST | 删除本地仓库文件 | 需登录 |
+| `/api/notes/repositories/<id>/download-file/<path>/` | GET | 下载单个文件 | 需登录 |
+| `/api/notes/repositories/<id>/download-repo/` | GET | 打包下载整个仓库 | 需登录 |
+| `/api/notes/init-local-repo/` | POST | 初始化本地仓库 | 公开 |
 
 ## 前端路由
 
 | 路径 | 组件 | 说明 | 权限 |
-|------|------|------|------|
+| --- | --- | --- | --- |
 | `/` | HomePage | 首页入口 | 公开 |
 | `/store` | StorePage | 仓库列表 | 公开 |
 | `/store/:id` | ToolDetailPage | 工具详情 | 公开 |
@@ -157,54 +196,84 @@ web/
 ## 技术栈
 
 ### 后端
-- Django 4.2
-- Django REST Framework 3.16
-- SimpleJWT（Token 认证）
-- django-cors-headers（跨域）
-- Gunicorn（生产 WSGI）
-- SQLite（默认数据库）
+
+| 技术 | 版本 | 用途 |
+| --- | --- | --- |
+| Django | 4.2 | Web 框架 |
+| Django REST Framework | 3.16 | RESTful API |
+| djangorestframework-simplejwt | 5.5 | JWT 认证（Access 2h / Refresh 7d） |
+| django-cors-headers | 4.9 | 跨域支持 |
+| PyMySQL | 1.1 | MySQL 驱动（生产可选） |
+| Gunicorn | - | 生产 WSGI 服务器 |
+| SQLite | - | 默认数据库 |
 
 ### 前端
-- Vue 3 + Vite
-- Pinia（状态管理）
-- Vue Router（路由）
-- Axios（HTTP 请求）
+
+| 技术 | 版本 | 用途 |
+| --- | --- | --- |
+| Vue | 3.5 | 前端框架 |
+| Vite | 6.3 | 构建工具 |
+| Pinia | 4.0 | 状态管理 |
+| Vue Router | 4.6 | 路由管理 |
+| Axios | 1.18 | HTTP 请求 |
+| marked | 18.0 | Markdown 渲染 |
+| highlight.js | 11.11 | 代码高亮 |
+| KaTeX | 0.18 | 数学公式渲染 |
+| Mermaid | 11.16 | 图表渲染 |
+| DOMPurify | 3.4 | XSS 防护（HTML 消毒） |
 
 ### 部署
-- Nginx（反向代理 + 静态资源）
-- systemd / Supervisor（进程守护）
+
+- Nginx — 反向代理 + 静态资源服务
+- systemd — Gunicorn 进程守护（生产）
+- 宝塔面板 — 可选的服务器管理面板
 
 ## 本地部署
 
 ### macOS 开发环境
 
 ```bash
-# 克隆项目
 git clone https://github.com/cn33331/myWeb_Zjx.git web
 cd web
 
-# 一键启动前后端
+# 一键启动前后端开发服务
 chmod +x 启动服务.command
 ./启动服务.command
 ```
 
-启动后访问：
-- 前端：http://localhost:5173/
-- 后端：http://localhost:8000/admin
+也可使用本地 Nginx 配置统一入口（监听 8080 端口）：
+
+```bash
+nginx -c /path/to/web/nginx/conf/nginx.conf
+```
+
+访问 http://localhost:8080/ 即可通过 Nginx 统一访问前后端。
 
 ### Linux 生产环境（宝塔面板）
 
 ```bash
-# 克隆项目
 cd /root/zjx
 git clone https://github.com/cn33331/myWeb_Zjx.git web
 cd web
 
-# 一键部署
+# 交互式部署（自动创建虚拟环境、安装依赖、构建前端、迁移数据库、生成 Nginx 配置）
 chmod +x deploy_bt.sh
 ./deploy_bt.sh
+```
 
-# 配置 Gunicorn 服务（systemd）
+`deploy_bt.sh` 会交互式引导完成以下步骤：
+
+1. 检测 Python / Node.js 环境
+2. 创建虚拟环境并安装 Python 依赖 + Gunicorn
+3. 安装前端依赖并构建
+4. 执行数据库迁移与静态文件收集
+5. 检查/创建管理员账号
+6. 生成 Nginx 配置（含 Admin IP 白名单设置）
+
+部署完成后，按脚本提示配置 Gunicorn 守护进程：
+
+```bash
+# 方式一：systemd
 cat > /etc/systemd/system/hub.service << 'EOF'
 [Unit]
 Description=Hub Platform Gunicorn Service
@@ -226,8 +295,11 @@ systemctl daemon-reload
 systemctl start hub
 systemctl enable hub
 
-# 配置 Nginx 反向代理
-cp nginx_bt.conf /www/server/panel/vhost/nginx/hub.conf
+# 方式二：宝塔面板 Supervisor 插件
+# 启动命令: /root/zjx/web/web/venv/bin/gunicorn hub.wsgi:application --bind 127.0.0.1:8000 --workers 4
+# 启动目录: /root/zjx/web/web/hub
+
+# 重载 Nginx
 /www/server/nginx/sbin/nginx -t && /www/server/nginx/sbin/nginx -s reload
 ```
 
@@ -235,25 +307,41 @@ cp nginx_bt.conf /www/server/panel/vhost/nginx/hub.conf
 
 ### 代码更新流程
 
-服务器上代码更新后的操作步骤：
-
 ```bash
 cd /root/zjx/web/web
 
-# 一键更新（拉取代码、迁移数据库、构建前端、重启服务）
+# 一键更新（拉取代码、检查依赖、迁移数据库、构建前端、重启服务）
 chmod +x update.sh
 ./update.sh
 ```
 
-**说明：**
-- `./update.sh` - 自动完成代码拉取、依赖检查、数据库迁移、前端构建、服务重启
-- 首次部署请使用 `deploy_bt.sh`（交互式配置）
-- 日常更新使用 `update.sh`（非交互式快速更新）
+| 脚本 | 用途 | 模式 |
+| --- | --- | --- |
+| `deploy_bt.sh` | 首次部署 | 交互式 |
+| `update.sh` | 日常更新 | 非交互式 |
+
+## 关键配置
+
+| 配置项 | 值 | 说明 |
+| --- | --- | --- |
+| `DEBUG` | `False` | 生产环境已关闭调试模式 |
+| `JWT Access Token` | 2 小时 | 访问令牌有效期 |
+| `JWT Refresh Token` | 7 天 | 刷新令牌有效期 |
+| `DATA_UPLOAD_MAX_MEMORY_SIZE` | 500 MB | 请求数据上传上限 |
+| `FILE_UPLOAD_MAX_MEMORY_SIZE` | 25 MB | 文件上传内存阈值 |
+| `Nginx client_max_body_size` | 500 MB | Nginx 请求体大小限制 |
+| `CORS_ALLOWED_ORIGINS` | localhost:5173, localhost:80 | 允许的前端来源 |
+| `PAGE_SIZE` | 10 | DRF 分页大小 |
 
 ## 安全注意事项
 
-1. 生产环境设置 `DEBUG = False`
-2. `CORS_ALLOWED_ORIGINS` 仅允许前端域名
-3. `SECRET_KEY` 使用环境变量管理
+1. 生产环境确保 `DEBUG = False`（当前已配置）
+2. `CORS_ALLOWED_ORIGINS` 仅允许前端域名，不要使用通配符
+3. `SECRET_KEY` 应通过环境变量管理，不要硬编码在代码中
 4. 仅开放 80/443 端口，限制 8000 端口仅本地访问
-5. 部署 SSL 证书（Let's Encrypt）强制 HTTPS
+5. 利用 `deploy_bt.sh` 的 Admin IP 白名单功能限制 `/admin/` 访问
+6. 部署 SSL 证书（Let's Encrypt）强制 HTTPS
+
+## License
+
+详见 [LICENSE](LICENSE)。

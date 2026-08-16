@@ -16,3 +16,4 @@ nginx/proxy_temp/
 nginx/fastcgi_temp/
 nginx/uwsgi_temp/
 nginx/scgi_temp/
+.workbuddy/
