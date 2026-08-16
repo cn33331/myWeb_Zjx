@@ -21,7 +21,11 @@ class ToolListView(generics.ListCreateAPIView):
 class ToolDetailView(generics.RetrieveDestroyAPIView):
     queryset = Tool.objects.all()
     serializer_class = ToolSerializer
-    permission_classes = [permissions.AllowAny]
+
+    def get_permissions(self):
+        if self.request.method == 'DELETE':
+            return [permissions.IsAdminUser()]
+        return [permissions.AllowAny()]
 
 
 class ToolDownloadView(generics.GenericAPIView):
