@@ -31,9 +31,12 @@
 /**
  * 趣味模块汇总页。
  *
- * 读取 public/fun/manifest.json 中的页面清单，渲染为卡片列表。
+ * 读取 public/fun-pages/manifest.json 中的页面清单，渲染为卡片列表。
  * 点击卡片在新标签页打开对应的静态 HTML 页面。
- * 新增趣味页只需：放入 public/fun/ 并在 manifest.json 添加一条记录。
+ * 新增趣味页只需：放入 public/fun-pages/ 并在 manifest.json 添加一条记录。
+ *
+ * 注意：静态目录名不能与 SPA 路由同名（路由为 /fun，故目录用 fun-pages），
+ * 否则 nginx 会把 /fun 当成目录请求而返回 301/403。
  */
 import { onMounted, ref } from 'vue'
 
@@ -42,7 +45,7 @@ const loading = ref(true)
 
 onMounted(async () => {
   try {
-    const res = await fetch('/fun/manifest.json')
+    const res = await fetch('/fun-pages/manifest.json')
     const data = await res.json()
     pages.value = data.pages || []
   } catch (error) {

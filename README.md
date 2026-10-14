@@ -92,7 +92,7 @@ web/
 │   │   ├── router/              # 路由配置与导航守卫
 │   │   ├── App.vue
 │   │   └── main.js
-│   ├── public/fun/              # 趣味静态页面（html + manifest.json）
+│   ├── public/fun-pages/        # 趣味静态页面（html + manifest.json）
 │   ├── .env.development         # 开发环境 API 地址
 │   ├── .env.production          # 生产环境 API 地址
 │   └── vite.config.js           # Vite 配置（代理、别名）
@@ -119,10 +119,10 @@ web/
 
 ### 趣味（fun）
 
-- 汇总展示 `public/fun/` 下的趣味静态页面
+- 汇总展示 `public/fun-pages/` 下的趣味静态页面
 - 页面以独立 HTML 存放，`manifest.json` 登记；新增页面只需放入文件并加一条记录
 - 点击卡片在新标签页打开（如「天天开心」祝福飘落动画）
-- 纯前端实现，不依赖后端应用
+- 纯前端实现，不依赖后端应用（静态目录名避开路由 `/fun`，防止 nginx 目录优先导致 301/403）
 
 ## API 接口总览
 
