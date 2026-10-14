@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <!-- 适配手机屏幕 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>天天开心</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden; /* 隐藏超出屏幕的内容 */
+      background: #f0f8ff; /* 背景色 */
+      position: relative;
+    }
+    .blessing {
+      position: absolute;
+      color: #e63946; /* 文字颜色 */
+      font-size: 18px; /* 文字大小 */
+      font-weight: bold;
+      pointer-events: none; /* 文字不阻挡点击 */
+      text-shadow: 0 0 3px rgba(0,0,0,0.2);
+      opacity: 0; /* 初始透明 */
+      white-space: nowrap; /* 祝福语不换行 */
+      animation: fall linear forwards; /* 飘落动画 */
+    }
+    /* 飘落动画：从顶部到底部，逐渐显示再消失 */
+    @keyframes fall {
+      0% {
+        transform: translateY(-50px) rotate(0deg);
+        opacity: 1;
+      }
+      80% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100vh) rotate(var(--rot, 30deg));
+        opacity: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <script>
+    // 祝福文字库（按主题分组，可自由增删）
+    const blessings = [
+      // 日常关怀
+      "多喝水哦", "记得吃水果", "按时吃饭呀", "照顾好自己", "记得吃早饭",
+      "别饿着自己", "多吃点好吃的", "记得好好休息",
+      // 天气冷暖
+      "天冷了，多穿衣服", "下雨记得带伞", "出门注意安全", "记得防晒哦", "风大，围好围巾",
+      // 作息提醒
+      "早点休息", "少熬夜", "睡个好觉", "记得午休一会儿", "别太累啦",
+      // 心情与鼓励
+      "每天都要元气满满", "保持好心情", "今天过得开心嘛", "愿你天天开心",
+      "一切都会好起来的", "你已经很棒啦", "加油，你是最棒的", "未来闪闪发光",
+      "要相信好事将至", "慢慢来，会好的",
+      // 思念与陪伴
+      "我想你了", "期待下一次见面", "一直在你身边呀", "记得想我哦", "愿你被很多人爱着",
+      // 美好祝福
+      "梦想成真", "顺顺利利", "万事胜意", "愿所有烦恼都消失", "平安喜乐",
+      "好运连连", "心想事成", "生活甜甜的", "所愿皆所得"
+    ];
+
+    // 同屏最大元素数量，超过则不再生成，避免低端设备卡顿
+    const MAX_BLESSINGS = 120;
+    let aliveCount = 0;
+
+    // 随机生成一个祝福元素
+    function createBlessing() {
+      if (aliveCount >= MAX_BLESSINGS) return;
+
+      const div = document.createElement('div');
+      div.className = 'blessing';
+
+      // 随机选择祝福文字
+      div.innerText = blessings[Math.floor(Math.random() * blessings.length)];
+
+      // 随机位置（水平方向）
+      const left = Math.random() * 100; // 0-100% 屏幕宽度
+      div.style.left = `${left}%`;
+
+      // 随机样式
+      const size = 14 + Math.random() * 10; // 14-24px 随机大小
+      div.style.fontSize = `${size}px`;
+
+      const colors = ['#e63946', '#fb8500', '#ffb703', '#06d6a0', '#118ab2', '#9b5de5'];
+      div.style.color = colors[Math.floor(Math.random() * colors.length)]; // 随机颜色
+
+      // 随机结束时的旋转角度
+      div.style.setProperty('--rot', `${(Math.random() * 60 - 30).toFixed(0)}deg`);
+
+      // 随机动画时长（3-8秒）
+      const duration = 3 + Math.random() * 5;
+      div.style.animationDuration = `${duration}s`;
+
+      document.body.appendChild(div);
+      aliveCount++;
+
+      // 动画结束后移除元素，避免性能占用
+      setTimeout(() => {
+        div.remove();
+        aliveCount--;
+      }, duration * 1000);
+    }
+
+    // 定时生成祝福（每 280ms 生成一个，节奏更舒缓且不易堆积）
+    setInterval(createBlessing, 280);
+  </script>
+</body>
+</html>

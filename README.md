@@ -27,6 +27,7 @@ chmod +x 启动服务.command
 | --- | --- | --- | --- |
 | 首页入口 | `/` | `home` | 展示平台各功能模块入口卡片 |
 | 应用仓库 | `/store/` | `store` | 工具的上传、下载与详情查看 |
+| 趣味 | `/fun/` | —（纯前端） | 存放有趣的静态页面，如祝福飘落动画 |
 | 管理后台 | `/admin/` | Django Admin | 站点管理 |
 | API 接口 | `/api/` | DRF | RESTful API 服务 |
 
@@ -91,6 +92,7 @@ web/
 │   │   ├── router/              # 路由配置与导航守卫
 │   │   ├── App.vue
 │   │   └── main.js
+│   ├── public/fun/              # 趣味静态页面（html + manifest.json）
 │   ├── .env.development         # 开发环境 API 地址
 │   ├── .env.production          # 生产环境 API 地址
 │   └── vite.config.js           # Vite 配置（代理、别名）
@@ -114,6 +116,13 @@ web/
 - 工具上传管理（管理员）
 - 工具下载（带下载次数统计）
 - 工具详情查看
+
+### 趣味（fun）
+
+- 汇总展示 `public/fun/` 下的趣味静态页面
+- 页面以独立 HTML 存放，`manifest.json` 登记；新增页面只需放入文件并加一条记录
+- 点击卡片在新标签页打开（如「天天开心」祝福飘落动画）
+- 纯前端实现，不依赖后端应用
 
 ## API 接口总览
 
@@ -140,6 +149,7 @@ web/
 | --- | --- | --- | --- |
 | `/` | HomePage | 首页入口 | 公开 |
 | `/store` | StorePage | 仓库列表 | 公开 |
+| `/fun` | FunPage | 趣味页面 | 公开 |
 | `/store/:id` | ToolDetailPage | 工具详情 | 公开 |
 | `/store/upload` | ToolUploadPage | 工具上传 | 管理员 |
 | `/login` | LoginPage | 登录 | 未登录 |

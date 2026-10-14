@@ -1,0 +1,11 @@
+{
+  "pages": [
+    {
+      "id": "happy",
+      "title": "天天开心",
+      "desc": "满屏飘落的祝福文字",
+      "icon": "🌈",
+      "path": "/fun/happy.html"
+    }
+  ]
+}

@@ -13,6 +13,11 @@ const routes = [
     component: () => import('@/pages/StorePage.vue')
   },
   {
+    path: '/fun',
+    name: 'Fun',
+    component: () => import('@/pages/fun/FunPage.vue')
+  },
+  {
     path: '/store/upload',
     name: 'ToolUpload',
     component: () => import('@/pages/ToolUploadPage.vue'),
