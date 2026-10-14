@@ -42,8 +42,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'home',
     'store',
-    'transfer',
-    'notes',
 ]
 
 MIDDLEWARE = [
@@ -172,12 +170,5 @@ LOGGING = {
     'root': {
         'handlers': ['console'],
         'level': 'INFO',
-    },
-    'loggers': {
-        'notes': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
     },
 }

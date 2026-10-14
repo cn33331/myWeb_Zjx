@@ -13,16 +13,6 @@ const routes = [
     component: () => import('@/pages/StorePage.vue')
   },
   {
-    path: '/transfer',
-    name: 'Transfer',
-    component: () => import('@/pages/TransferPage.vue')
-  },
-  {
-    path: '/notes',
-    name: 'Notes',
-    component: () => import('@/pages/NotesPage.vue')
-  },
-  {
     path: '/store/upload',
     name: 'ToolUpload',
     component: () => import('@/pages/ToolUploadPage.vue'),

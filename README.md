@@ -1,6 +1,6 @@
 # Hub - 多功能 Web 平台
 
-基于 Django + Vue 3 的前后端分离 Web 平台，集成应用仓库、笔记管理、文件中转站等功能模块。
+基于 Django + Vue 3 的前后端分离 Web 平台，集成首页入口、应用仓库等功能模块。
 
 ## 快速开始
 
@@ -27,8 +27,6 @@ chmod +x 启动服务.command
 | --- | --- | --- | --- |
 | 首页入口 | `/` | `home` | 展示平台各功能模块入口卡片 |
 | 应用仓库 | `/store/` | `store` | 工具的上传、下载与详情查看 |
-| 笔记管理 | `/notes/` | `notes` | 从 Gitee/GitHub 拉取 Obsidian 笔记并展示 |
-| 中转站 | `/transfer/` | `transfer` | 文件传输导航与记录管理 |
 | 管理后台 | `/admin/` | Django Admin | 站点管理 |
 | API 接口 | `/api/` | DRF | RESTful API 服务 |
 
@@ -50,8 +48,7 @@ chmod +x 启动服务.command
 │  /hub/                                                  │
 │  ├── hub/settings.py    CORS / DRF / JWT 配置            │
 │  ├── hub/auth_*.py      认证模块（登录/注册/Token刷新）  │
-│  ├── store/api/         仓库模块 API                     │
-│  └── notes/             笔记模块（Git同步/Markdown展示） │
+│  └── store/api/         仓库模块 API                     │
 └──────────────────────────┬──────────────────────────────┘
                            │ Gunicorn / runserver
                            ▼
@@ -83,8 +80,6 @@ web/
 │   │   ├── models.py
 │   │   ├── api/                 # REST API（serializers/views/urls）
 │   │   └── templates/store/
-│   ├── notes/                   # 笔记管理模块（Git同步、Markdown展示）
-│   ├── transfer/                # 中转站模块（传输记录管理）
 │   ├── static/                  # 收集的静态文件
 │   └── media/                   # 用户上传文件
 ├── vue-frontend/                # Vue 3 前端项目
@@ -94,7 +89,6 @@ web/
 │   │   ├── pages/               # 页面组件
 │   │   ├── stores/              # Pinia 状态管理（auth/store）
 │   │   ├── router/              # 路由配置与导航守卫
-│   │   ├── utils/               # 工具函数
 │   │   ├── App.vue
 │   │   └── main.js
 │   ├── .env.development         # 开发环境 API 地址
@@ -121,22 +115,6 @@ web/
 - 工具下载（带下载次数统计）
 - 工具详情查看
 
-### 笔记管理（notes）
-
-- 支持本地仓库和远程仓库两种类型
-- 远程仓库：从 Gitee/GitHub 拉取笔记，支持分支选择和同步
-- 本地仓库：支持文件上传、删除、下载（需登录）
-- 打包下载整个本地仓库为 zip（需登录）
-- 笔记列表展示与搜索，VSCode 风格文件树导航
-- Markdown 渲染（marked + highlight.js + KaTeX 数学公式 + Mermaid 图表）
-- 笔记目录（TOC）自动生成与跳转
-
-### 临时中转站（transfer）
-
-- 快速导航至 AirPortal 空投和文叔叔文件传输网站
-- 记录文件传输信息（取件码、取件链接、文件名、文件大小）
-- 传输记录的添加、查看与删除
-
 ## API 接口总览
 
 ### 认证
@@ -156,31 +134,6 @@ web/
 | `/api/store/tools/<id>/` | DELETE | 删除工具 | 管理员 |
 | `/api/store/tools/<id>/download/` | GET | 工具下载 | 公开 |
 
-### 中转站
-
-| API 路径 | 方法 | 说明 | 认证 |
-| --- | --- | --- | --- |
-| `/api/transfer/records/` | GET / POST | 传输记录列表 / 添加记录 | 公开 |
-| `/api/transfer/records/<id>/` | GET / PUT / DELETE | 记录详情 / 更新 / 删除 | 公开 |
-
-### 笔记
-
-| API 路径 | 方法 | 说明 | 认证 |
-| --- | --- | --- | --- |
-| `/api/notes/repositories/` | GET / POST | 仓库列表 / 添加仓库 | 公开 |
-| `/api/notes/repositories/<id>/` | GET / PUT / DELETE | 仓库详情 / 更新 / 删除 | 公开 |
-| `/api/notes/repositories/<id>/sync/` | POST | 同步远程仓库 | 公开 |
-| `/api/notes/repositories/<id>/file-tree/` | GET | 获取文件树结构 | 公开 |
-| `/api/notes/repositories/<id>/note/<path>/` | GET | 获取笔记内容与目录 | 公开 |
-| `/api/notes/repositories/<id>/notes/` | GET | 获取笔记列表（不分页） | 公开 |
-| `/api/notes/repositories/<id>/branches/` | GET | 获取远程仓库分支列表 | 公开 |
-| `/api/notes/repositories/<id>/update-branch/` | POST | 切换仓库分支 | 公开 |
-| `/api/notes/repositories/<id>/upload/` | POST | 上传文件到本地仓库 | 需登录 |
-| `/api/notes/repositories/<id>/delete/` | POST | 删除本地仓库文件 | 需登录 |
-| `/api/notes/repositories/<id>/download-file/<path>/` | GET | 下载单个文件 | 需登录 |
-| `/api/notes/repositories/<id>/download-repo/` | GET | 打包下载整个仓库 | 需登录 |
-| `/api/notes/init-local-repo/` | POST | 初始化本地仓库 | 公开 |
-
 ## 前端路由
 
 | 路径 | 组件 | 说明 | 权限 |
@@ -189,8 +142,6 @@ web/
 | `/store` | StorePage | 仓库列表 | 公开 |
 | `/store/:id` | ToolDetailPage | 工具详情 | 公开 |
 | `/store/upload` | ToolUploadPage | 工具上传 | 管理员 |
-| `/notes` | NotesPage | 笔记管理 | 公开 |
-| `/transfer` | TransferPage | 临时中转站 | 公开 |
 | `/login` | LoginPage | 登录 | 未登录 |
 
 ## 技术栈
@@ -216,11 +167,6 @@ web/
 | Pinia | 4.0 | 状态管理 |
 | Vue Router | 4.6 | 路由管理 |
 | Axios | 1.18 | HTTP 请求 |
-| marked | 18.0 | Markdown 渲染 |
-| highlight.js | 11.11 | 代码高亮 |
-| KaTeX | 0.18 | 数学公式渲染 |
-| Mermaid | 11.16 | 图表渲染 |
-| DOMPurify | 3.4 | XSS 防护（HTML 消毒） |
 
 ### 部署
 
