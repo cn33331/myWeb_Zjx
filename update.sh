@@ -25,10 +25,11 @@ main() {
     echo "=========================================="
     echo
 
-    # 1. 拉取最新代码
-    log_info "拉取最新代码..."
+    # 1. 拉取最新代码（丢弃服务器本地改动，强制与远程一致）
+    log_info "拉取最新代码（丢弃本地改动）..."
     cd "$SCRIPT_DIR"
-    git pull origin main
+    git fetch origin main
+    git reset --hard origin/main
     log_info "代码更新完成"
 
     # 2. 检查虚拟环境
